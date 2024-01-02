@@ -11,6 +11,18 @@ type DesignParameter struct {
 	Step float64
 }
 
+type SystemResourcesType struct {
+	Partition string
+	Nodes     int
+	Ntasks    int
+}
+
+type StarCCM struct {
+	PodKey	string
+	JavaMacro string
+	SimFile string
+}
+
 type DesignManagerInputParameters struct {
 	NumSims               int
 	NtasksPerSim          int
@@ -26,19 +38,15 @@ type DesignObjective struct {
 }
 
 type ConfigFile struct {
-	// System Architecture
-	Partition string
-	Nodes     int
-	Ntasks    int
+	// System Resources
+	SystemResources SystemResourcesType
 
 	// Project
-	WorkDir string
+	WorkingDir string
 
 	// STAR-CCM+
-	PodKey    string
-	JavaMacro string // name of the java macro file
-	SimFile   string // name of the sim file
+	StarCCM StarCCM
 
 	// Design Manager Parameters
-	DesignManagerParameters DesignManagerInputParameters
+	DesignManagerInputParameters DesignManagerInputParameters
 }

@@ -1,0 +1,43 @@
+{
+    "SystemResources": {
+        "Partition": "normal",
+        "Nodes": 16,
+        "Ntasks": 16
+    },
+    "WorkingDir": "/scratch/ganymede/<user>/DM/",
+    "StarCCM": {
+        "PodKey": "<podkey>",
+        "JavaMacro": "macro.java",
+        "SimFile": "simfile.sim"
+    },
+    "DesignManagerInputParameters": {
+        "NumSims": 100,
+        "NtasksPerSim": -1,
+        "StudyType": "Pareto",
+        "OptimizationAlgorithm": "NSGA-II",
+        "DesignParameters": [
+            {
+                "Name": "Design Parameter 1",
+                "Min": 0.0,
+                "Max": 1.0,
+                "Step": 0.1
+            },
+            {
+                "Name": "Design Parameter 2",
+                "Min": 0.0,
+                "Max": 1.0,
+                "Step": 0.1
+            }
+        ],
+        "DesignObjectives": [
+            {
+                "Name": "Design Objective 1",
+                "Weight": 1.0
+            },
+            {
+                "Name": "Design Objective 2",
+                "Weight": 0.75
+            }
+        ]
+    }
+}
