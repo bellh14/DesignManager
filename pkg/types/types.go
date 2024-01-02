@@ -50,3 +50,10 @@ type ConfigFile struct {
 	// Design Manager Parameters
 	DesignManagerInputParameters DesignManagerInputParameters
 }
+
+type JobSubmissionType struct {
+	WorkingDir string
+	Ntasks int
+	StarCCM StarCCM
+	JobNumber int
+}
