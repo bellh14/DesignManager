@@ -3,14 +3,16 @@ package generator
 import (
 	"fmt"
 	"github.com/bellh14/DFRDesignManager/pkg/types"
+	"github.com/bellh14/DFRDesignManager/pkg/utils"
 	"os"
+	"reflect"
 )
 
 func GenerateJobScript(jobScriptInputs types.JobSubmissionType) {
 
 	//TODO: make this less painful to read
 
-	jobScript, err := os.Create("jobScript.sh")
+	jobScript, err := os.Create("JobScript.sh")
 	if err != nil {
 		// TODO: handle error
 		fmt.Println(err)
@@ -19,33 +21,9 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType) {
 
 	jobScript.WriteString("#!/bin/bash\n\n")
 
-	jobScript.WriteString("WORKING_DIR=")
-	jobScript.WriteString(jobScriptInputs.WorkingDir)
-	jobScript.WriteString("\n")
+	jobSubmissionValues := reflect.ValueOf(jobScriptInputs)
 
-	jobScript.WriteString("NCPU=")
-	jobScript.WriteString(fmt.Sprint(jobScriptInputs.Ntasks))
-	jobScript.WriteString("\n")
-
-	jobScript.WriteString("PODKEY=")
-	jobScript.WriteString(jobScriptInputs.StarCCM.PodKey)
-	jobScript.WriteString("\n")
-
-	jobScript.WriteString("JAVA_MACRO=")
-	jobScript.WriteString(jobScriptInputs.StarCCM.JavaMacro)
-	jobScript.WriteString("\n")
-
-	jobScript.WriteString("SIM_FILE=")
-	jobScript.WriteString(jobScriptInputs.StarCCM.SimFile)
-	jobScript.WriteString("\n")
-
-	jobScript.WriteString("JOB_NUMBER=")
-	jobScript.WriteString(fmt.Sprint(jobScriptInputs.JobNumber))
-	jobScript.WriteString("\n\n")
-
-	jobScript.WriteString("STARCCM_PATH=")
-	jobScript.WriteString(jobScriptInputs.StarCCM.Path)
-	jobScript.WriteString("\n\n")
+	utils.WriteStructOfBashVariables(jobSubmissionValues, jobScript)
 
 	jobScript.WriteString("mkdir -p $WORKING_DIR/$JOB_NUMBER\n\n")
 

@@ -55,6 +55,9 @@ type ConfigFile struct {
 type JobSubmissionType struct {
 	WorkingDir string
 	Ntasks int
-	StarCCM StarCCM
+	Path string
+	PodKey	string
+	JavaMacro string
+	SimFile string
 	JobNumber int
 }
