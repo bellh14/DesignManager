@@ -18,6 +18,7 @@ type SystemResourcesType struct {
 }
 
 type StarCCM struct {
+	Path string
 	PodKey	string
 	JavaMacro string
 	SimFile string

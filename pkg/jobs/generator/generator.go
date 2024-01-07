@@ -43,9 +43,11 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType) {
 	jobScript.WriteString(fmt.Sprint(jobScriptInputs.JobNumber))
 	jobScript.WriteString("\n\n")
 
+	jobScript.WriteString("STARCCM_PATH=")
+	jobScript.WriteString(jobScriptInputs.StarCCM.Path)
+	jobScript.WriteString("\n\n")
+
 	jobScript.WriteString("mkdir -p $WORKING_DIR/$JOB_NUMBER\n\n")
 
-	jobScript.WriteString("module load starccm/17.04.007\n")
-
-	jobScript.WriteString(`starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PODKEY -batch $WORKING_DIR/$JOB_NUMBER/$JAVA_MACRO $WORKING_DIR/$JOB_NUMBER/$SIM_FILE -np $NCPU -bs slurm -time -batch-report`)
+	jobScript.WriteString(`STARCCM_PATH/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PODKEY -batch $WORKING_DIR/$JOB_NUMBER/$JAVA_MACRO $WORKING_DIR/$JOB_NUMBER/$SIM_FILE -np $NCPU -bs slurm -time -batch-report`)
 }
