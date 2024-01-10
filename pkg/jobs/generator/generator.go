@@ -25,7 +25,7 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType) {
 
 	utils.WriteStructOfBashVariables(jobSubmissionValues, jobScript)
 
-	jobScript.WriteString("mkdir -p $WORKING_DIR/$JOB_NUMBER\n\n")
+	jobScript.WriteString("mkdir $WorkingDir/$JobNumber\n\n")
 
-	jobScript.WriteString(`STARCCM_PATH/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PODKEY -batch $WORKING_DIR/$JOB_NUMBER/$JAVA_MACRO $WORKING_DIR/$JOB_NUMBER/$SIM_FILE -np $NCPU -bs slurm -time -batch-report`)
+	jobScript.WriteString(`$Path/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JobNumber/$JavaMacro $WorkingDir/$JobNumber/$SimFile -np $Ntasks -time -batch-report`)
 }
