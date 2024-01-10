@@ -8,7 +8,7 @@ import (
 
 func TestGenerateJobScript(t *testing.T) {
 	jobScriptInputs := types.JobSubmissionType{
-		WorkingDir: "../../../scripts/run_simulation.sh",
+		WorkingDir: ".",
 		Ntasks:     4,
 		Path:       "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
 		PodKey:     "1234-5678-9012-3456",
