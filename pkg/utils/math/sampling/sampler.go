@@ -19,7 +19,7 @@ func NewSampler(config types.ConfigFile) *Sampler {
 }
 
 func (sampler *Sampler) SampleParameter(designParameter types.DesignParameter) float64 {
-	return probability.NormalDistribution(designParameter.Min, designParameter.Max)
+	return probability.NormalDistribution(designParameter.Mean, designParameter.StdDev)
 }
 
 func (sampler *Sampler) Sample() types.ParameterSamples {
