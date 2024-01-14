@@ -61,3 +61,8 @@ type JobSubmissionType struct {
 	SimFile string
 	JobNumber int
 }
+
+type ParameterSamples struct {
+	Samples []float64
+}
+

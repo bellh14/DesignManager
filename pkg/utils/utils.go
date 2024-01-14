@@ -5,6 +5,8 @@ import (
 	"os"
 	"fmt"
 	"reflect"
+	"math/rand"
+	"time"
 )
 
 func PrettyPrint(i interface{}) string {
@@ -22,4 +24,8 @@ func WriteStructOfBashVariables(values reflect.Value, file *os.File) {
 		name := values.Type().Field(i).Name
 		WriteBashVariable(file, name, value.Interface())
 	}
+}
+
+func SeedRand(){
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 }
