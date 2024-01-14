@@ -9,6 +9,8 @@ type DesignParameter struct {
 	Min  float64
 	Max  float64
 	Step float64
+	Mean float64
+	StdDev float64
 }
 
 type SystemResourcesType struct {
@@ -61,3 +63,8 @@ type JobSubmissionType struct {
 	SimFile string
 	JobNumber int
 }
+
+type ParameterSamples struct {
+	Samples []float64
+}
+
