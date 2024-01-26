@@ -5,11 +5,11 @@ type SystemArgs struct {
 }
 
 type DesignParameter struct {
-	Name string
-	Min  float64
-	Max  float64
-	Step float64
-	Mean float64
+	Name   string
+	Min    float64
+	Max    float64
+	Step   float64
+	Mean   float64
 	StdDev float64
 }
 
@@ -20,10 +20,10 @@ type SystemResourcesType struct {
 }
 
 type StarCCM struct {
-	Path string
-	PodKey	string
+	Path      string
+	PodKey    string
 	JavaMacro string
-	SimFile string
+	SimFile   string
 }
 
 type DesignManagerInputParameters struct {
@@ -56,12 +56,12 @@ type ConfigFile struct {
 
 type JobSubmissionType struct {
 	WorkingDir string
-	Ntasks int
-	Path string
-	PodKey	string
-	JavaMacro string
-	SimFile string
-	JobNumber int
+	Ntasks     int
+	Path       string
+	PodKey     string
+	JavaMacro  string
+	SimFile    string
+	JobNumber  int
 }
 
 type ParameterSamples struct {
