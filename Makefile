@@ -1,5 +1,5 @@
 build:
-	@go build -o bin/DesignManager
+	@go build -C cmd/ -o ../bin/DesignManager
 
 run: build
 	@./bin/DesignManager
