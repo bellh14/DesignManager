@@ -68,3 +68,8 @@ type ParameterSamples struct {
 	Samples []float64
 }
 
+type GenerationResults struct {
+	Number int
+	FailedSims []int
+	SucceededSims []int
+}
