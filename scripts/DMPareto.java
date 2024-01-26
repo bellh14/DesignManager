@@ -19,7 +19,8 @@ import java.util.concurrent.TimeUnit;
     1: failed to read input csv
     2: meshing error
     3: results saving error
-    4: other error (probably sim error from mesh)
+    4: simulation error during iteration probably diverged
+    5: other error (probably sim error from mesh)
  */
 
 
@@ -30,6 +31,8 @@ public class DMPareto extends StarMacro {
     Double biplaneGapSize = 0.0;
     Double biplanePosition = 0.0;
     Double fw4thAOA = 0.0;
+    
+    final int MAX_ITERATIONS = 800;
 
     @Override
     public void execute() {
@@ -59,6 +62,12 @@ public class DMPareto extends StarMacro {
                     + TimeUnit.MINUTES.convert((iterationElapsedTime), TimeUnit.NANOSECONDS));
 
             saveScenes(sim, baseDir, simName);
+
+            if (sim.getSimulationIterator().getCurrentIteration() != MAX_ITERATIONS) {
+                System.out.println("Simulation did not reach max iterations");
+                System.exit(4);
+            }
+
             long endTotal = System.nanoTime();
             long totalElapsed = endTotal - startTotalTime;
             System.out.println("Total Time Taken: " + TimeUnit.MINUTES.convert(totalElapsed, TimeUnit.NANOSECONDS));

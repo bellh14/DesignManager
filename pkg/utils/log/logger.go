@@ -44,8 +44,8 @@ func (logger *Logger) SimError (jobNumber int, e error) {
 func (logger *Logger) GenerationResults (generationResults types.GenerationResults){
 	logger.Output(2, fmt.Sprintf("Generation Results: %v", generationResults))
 	if len(generationResults.FailedSims) > 0 {
-		for sim := range generationResults.FailedSims {
-			logger.Output(2, fmt.Sprintf("Failed Simulation: %v", sim))
+		for _, sim := range generationResults.FailedSims {
+			logger.Output(2, fmt.Sprintf("Simulation: %v failed from %s", sim.JobNumber, sim.Cause))
 		}
 	}
 
