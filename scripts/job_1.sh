@@ -11,7 +11,7 @@ $Path/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $W
 
 exit_code=$?
 if [ $exit_code -ne 0 ]; then
-    echo "Error: StarCCM+ exited with non-zero exit code: $exit_code >&2"
+    echo "Error: StarCCM+ exited with non-zero exit code: $exit_code" >&2
     exit $exit_code
 fi
 
