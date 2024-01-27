@@ -2,6 +2,7 @@ package nsgaii
 
 import (
 	"math"
+	"sort"
 )
 
 // implements the NSGA-II algorithm
@@ -32,6 +33,12 @@ func (nsgaii *NSGAII) Run() {
 }
 
 func (nsgaii *NSGAII) SortByObjective(objective int) (sortedSolutions []*Solution) {
+
+	sortedSolutions = make([]*Solution, len(nsgaii.CurrentFront.Solutions))
+	copy(sortedSolutions, nsgaii.CurrentFront.Solutions)
+	sort.Slice(sortedSolutions, func(i, j int) bool {
+		return sortedSolutions[i].DesignObjectives[objective] < sortedSolutions[j].DesignObjectives[objective]
+	})
 
 	return sortedSolutions
 
@@ -72,7 +79,7 @@ func (nsgaii *NSGAII) CalculateCrowdingDistance() {
 	}
 
 	for i := 0; i < len(nsgaii.CurrentFront.Solutions[0].DesignObjectives); i++ {
-		// nsgaii.CurrentFront.Solutions = nsgaii.SortByObjective(i)
+		nsgaii.CurrentFront.Solutions = nsgaii.SortByObjective(i)
 		nsgaii.CurrentFront.Solutions[0].Distance = 1000000000
 		nsgaii.CurrentFront.Solutions[len(nsgaii.CurrentFront.Solutions)-1].Distance = 1000000000
 		for j := 1; j < len(nsgaii.CurrentFront.Solutions)-1; j++ {
@@ -91,10 +98,10 @@ func (nsgaii *NSGAII) CalculateCrowdingDistance() {
 
 func (nsgaii *NSGAII) CompareCrowdingDistance(s1 *Solution, s2 *Solution) bool {
 
-	if s1.Rank < s2.Rank || (s1.Rank == s2.Rank && s1.Distance > s2.Distance) {
-		return false
+	if s1.Rank < s2.Rank || ((s1.Rank == s2.Rank) && (s1.Distance < s2.Distance)) {
+		return true
 	}
-	return true
+	return false
 
 }
 

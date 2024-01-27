@@ -82,3 +82,42 @@ func TestCalculateCrowdingDistance(t *testing.T) {
 		}
 	}
 }
+
+func TestCompareCrowdingDistance(t *testing.T){
+	nsgaii := &nsgaii.NSGAII{
+		CurrentFront: &nsgaii.Population{
+			Solutions: []*nsgaii.Solution{
+				{
+					DesignObjectives: []float64{1, 2},
+					Rank: 1,
+					Distance: 1,
+				},
+				{
+					DesignObjectives: []float64{4, 5},
+					Rank: 1,
+					Distance: 2,
+				},
+				{
+					DesignObjectives: []float64{7, 8},
+					Rank: 2,
+					Distance: 3,
+				},
+			},
+		},
+	}
+	if !nsgaii.CompareCrowdingDistance(nsgaii.CurrentFront.Solutions[0], nsgaii.CurrentFront.Solutions[1]) {
+		t.Errorf("Expected %v, got %v", true, nsgaii.CompareCrowdingDistance(nsgaii.CurrentFront.Solutions[0], nsgaii.CurrentFront.Solutions[1]))
+	}
+
+	if nsgaii.CompareCrowdingDistance(nsgaii.CurrentFront.Solutions[1], nsgaii.CurrentFront.Solutions[0]) {
+		t.Errorf("Expected %v, got %v", false, nsgaii.CompareCrowdingDistance(nsgaii.CurrentFront.Solutions[1], nsgaii.CurrentFront.Solutions[0]))
+	}
+	
+	if !nsgaii.CompareCrowdingDistance(nsgaii.CurrentFront.Solutions[1], nsgaii.CurrentFront.Solutions[2]) {
+		t.Errorf("Expected %v, got %v", true, nsgaii.CompareCrowdingDistance(nsgaii.CurrentFront.Solutions[1], nsgaii.CurrentFront.Solutions[2]))
+		t.Logf("Solution 1 rank: %v", nsgaii.CurrentFront.Solutions[1].Rank)
+		t.Logf("Solution 2 rank: %v", nsgaii.CurrentFront.Solutions[2].Rank)
+		t.Logf("Solution 1 distance: %v", nsgaii.CurrentFront.Solutions[1].Distance)
+		t.Logf("Solution 2 distance: %v", nsgaii.CurrentFront.Solutions[2].Distance)
+	}
+}
