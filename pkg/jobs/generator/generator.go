@@ -34,7 +34,7 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType) {
 	jobScript.WriteString("\n\n")
 	jobScript.WriteString("exit_code=$?\n")
 	jobScript.WriteString("if [ $exit_code -ne 0 ]; then\n")
-	jobScript.WriteString("    echo \"Error: StarCCM+ exited with non-zero exit code: $exit_code >&2\"\n")
+	jobScript.WriteString("    echo \"Error: StarCCM+ exited with non-zero exit code: $exit_code\" >&2\n")
 	jobScript.WriteString("    exit $exit_code\n")
 	jobScript.WriteString("fi\n\n")
 
