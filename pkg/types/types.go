@@ -37,6 +37,7 @@ type DesignManagerInputParameters struct {
 
 type DesignObjective struct {
 	Name   string
+	Goal  string
 	Weight float64
 }
 

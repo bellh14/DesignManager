@@ -107,11 +107,13 @@ func TestParseConfigFile(t *testing.T) {
 	expectedDesignObjective1 := types.DesignObjective{
 		Name: "Design Objective 1",
 		Weight: 1.0,
+		Goal: "Maximize",
 	}
 
 	expectedDesignObjective2 := types.DesignObjective{
 		Name: "Design Objective 2",
 		Weight: 0.75,
+		Goal: "Minimize",
 	}
 
 	expectedDesignObjectives := []types.DesignObjective{
