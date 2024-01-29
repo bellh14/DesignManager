@@ -33,11 +33,13 @@
         "DesignObjectives": [
             {
                 "Name": "Design Objective 1",
-                "Weight": 1.0
+                "Weight": 1.0,
+                "Goal": "Maximize"
             },
             {
                 "Name": "Design Objective 2",
-                "Weight": 0.75
+                "Weight": 0.75,
+                "Goal": "Minimize"
             }
         ]
     }
