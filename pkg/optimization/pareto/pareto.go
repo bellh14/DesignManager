@@ -20,4 +20,6 @@ func NewPareto(designManagerInputParams types.DesignManagerInputParameters, jobS
 func (paretoHandler *ParetoHandler) Run() {
 	// utils.PrintStruct(paretoHandler.DesignManagerInputParameters)
 	// utils.PrintStruct(paretoHandler.JobSubmissionType)
+	// HandleSimulations()
 }
+

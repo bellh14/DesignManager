@@ -74,6 +74,22 @@ type FailedSimulation struct {
 	Cause string
 }
 
+type DesignObjectiveResult struct {
+	DesignObjectiveName string
+	DesignObjectiveResult float64
+}
+
+type SimInput struct {
+	Name string
+	Value float64
+}
+
+type SimulationResult struct {
+	JobNumber int
+	InputParameters []SimInput
+	DesignObjectiveResults []float64
+}
+
 type GenerationResults struct {
 	Number int
 	FailedSims []FailedSimulation
