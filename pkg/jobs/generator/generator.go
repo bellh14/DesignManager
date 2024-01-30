@@ -10,11 +10,11 @@ import (
 	"github.com/bellh14/DFRDesignManager/pkg/utils"
 )
 
-func GenerateJobScript(jobScriptInputs types.JobSubmissionType) {
+func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
 
 	//TODO: make this less painful to read
 
-	jobScript, err := os.Create(fmt.Sprintf("%s/job_%d.sh", jobScriptInputs.WorkingDir, jobScriptInputs.JobNumber))
+	jobScript, err := os.Create(fmt.Sprintf("%s/job_%d.sh", jobScriptInputs.WorkingDir, jobNumber))
 	if err != nil {
 		// TODO: handle error
 		fmt.Println(err)
@@ -38,7 +38,7 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType) {
 	jobScript.WriteString("    exit $exit_code\n")
 	jobScript.WriteString("fi\n\n")
 
-	err = os.Chmod(fmt.Sprintf("%s/job_%d.sh", jobScriptInputs.WorkingDir, jobScriptInputs.JobNumber), 0777)
+	err = os.Chmod(fmt.Sprintf("%s/job_%d.sh", jobScriptInputs.WorkingDir, jobNumber), 0777)
 	if err != nil {
 		log.Fatal(err)
 	}

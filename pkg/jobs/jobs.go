@@ -1,11 +1,12 @@
 package jobs
 
 import (
+	"github.com/bellh14/DFRDesignManager/pkg/simulations"
 	"github.com/bellh14/DFRDesignManager/pkg/types"
 	"sync"
 )
 
-func RunSimulation(jobSubmission *types.JobSubmissionType, simID int) (types.SimulationResult) {
+func RunSimulation(jobSubmission *types.JobSubmissionType, simID int) types.SimulationResult {
 	// Create simulation object
 	// simulation := NewSimulation(jobSubmission, simID)
 	// Run simulation
@@ -14,7 +15,7 @@ func RunSimulation(jobSubmission *types.JobSubmissionType, simID int) (types.Sim
 	return types.SimulationResult{}
 }
 
-func HandleSimulations(Results *[]types.SimulationResult, numSims int) {
+func HandleSimulations(jobSubmission *types.JobSubmissionType, Results *[]types.SimulationResult, numSims int) {
 	var wg sync.WaitGroup
 	results := make(chan types.SimulationResult, numSims)
 
@@ -22,14 +23,13 @@ func HandleSimulations(Results *[]types.SimulationResult, numSims int) {
 		wg.Add(1)
 		go func(simID int) {
 			defer wg.Done()
-			// simsParams := SampleDesignParameters()
-			// simResult := RunSimulation(simsParams)
+			simulations.NewSimulation(jobSubmission, simID).Run() //TODO: fix this
 		}(i)
 		wg.Wait()
 		close(results)
 
 		for result := range results {
 			*Results = append(*Results, result)
-		}	
+		}
 	}
 }

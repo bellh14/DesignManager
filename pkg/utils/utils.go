@@ -51,7 +51,7 @@ func WriteParameterCsvHeader(designParameters []types.DesignParameter, file *os.
 	file.WriteString("\n")
 }
 
-func CreateJobSubmission(systemResources types.SystemResourcesType, workingDir string, starCCM types.StarCCM, jobNumber int) types.JobSubmissionType {
+func CreateJobSubmission(systemResources types.SystemResourcesType, workingDir string, starCCM types.StarCCM) types.JobSubmissionType {
 	return types.JobSubmissionType{
 		WorkingDir: workingDir,
 		Ntasks:     systemResources.Ntasks,
@@ -59,6 +59,5 @@ func CreateJobSubmission(systemResources types.SystemResourcesType, workingDir s
 		PodKey:     starCCM.PodKey,
 		JavaMacro:  starCCM.JavaMacro,
 		SimFile:    starCCM.SimFile,
-		JobNumber:  jobNumber,
 	}
 }
