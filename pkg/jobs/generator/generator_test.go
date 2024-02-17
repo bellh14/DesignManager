@@ -14,8 +14,7 @@ func TestGenerateJobScript(t *testing.T) {
 		PodKey:     "1234-5678-9012-3456",
 		JavaMacro:  "DMPareto.java",
 		SimFile:    "sim.sim",
-		JobNumber:  1,
 	}
-	generator.GenerateJobScript(jobScriptInputs)
+	generator.GenerateJobScript(jobScriptInputs, 1)
 
 }

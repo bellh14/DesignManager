@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bellh14/DFRDesignManager/pkg/types"
+	"io"
 	"math/rand"
 	"os"
 	"reflect"
@@ -27,21 +28,41 @@ func WriteStructOfBashVariables(values reflect.Value, file *os.File) {
 	}
 }
 
+func CopyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+	return out.Close()
+}
+
 func SeedRand() {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-func WriteParameterCsv(samples types.ParameterSamples, file *os.File) {
-	for i, sample := range samples.Samples {
-		file.WriteString(fmt.Sprintf("%v", sample))
-		if i < len(samples.Samples)-1 {
+func WriteParameterCsv(samples []types.SimInput, file *os.File) {
+	for i, sample := range samples {
+		file.WriteString(fmt.Sprintf("%v", sample.Value))
+		if i < len(samples)-1 {
 			file.WriteString(",")
 		}
 	}
 	file.WriteString("\n")
 }
 
-func WriteParameterCsvHeader(designParameters []types.DesignParameter, file *os.File) {
+func WriteParameterCsvHeader(designParameters []types.SimInput, file *os.File) {
 	for i, designParameter := range designParameters {
 		file.WriteString(designParameter.Name)
 		if i < len(designParameters)-1 {
@@ -51,7 +72,7 @@ func WriteParameterCsvHeader(designParameters []types.DesignParameter, file *os.
 	file.WriteString("\n")
 }
 
-func CreateJobSubmission(systemResources types.SystemResourcesType, workingDir string, starCCM types.StarCCM, jobNumber int) types.JobSubmissionType {
+func CreateJobSubmission(systemResources types.SystemResourcesType, workingDir string, starCCM types.StarCCM) types.JobSubmissionType {
 	return types.JobSubmissionType{
 		WorkingDir: workingDir,
 		Ntasks:     systemResources.Ntasks,
@@ -59,6 +80,5 @@ func CreateJobSubmission(systemResources types.SystemResourcesType, workingDir s
 		PodKey:     starCCM.PodKey,
 		JavaMacro:  starCCM.JavaMacro,
 		SimFile:    starCCM.SimFile,
-		JobNumber:  jobNumber,
 	}
 }

@@ -21,19 +21,19 @@ func NewDesignManager(config types.ConfigFile) (*DesignManager) {
 func (designManager *DesignManager) Run() {
 }
 
-func (dm *DesignManager) handleDesignStudy(studyType string) {
+func (dm *DesignManager) HandleDesignStudy(studyType string) {
 	switch studyType {
 	case "Pareto":
-		dm.handlePareto()
+		dm.HandlePareto()
 	default:
 		fmt.Println("Error: Study type not supported")
 		os.Exit(1)
 	}
 }
 
-func (dm *DesignManager) handlePareto() {
+func (dm *DesignManager) HandlePareto() {
 
-	jobSubmission := utils.CreateJobSubmission(dm.ConfigFile.SystemResources, dm.ConfigFile.WorkingDir, dm.ConfigFile.StarCCM, 0)
+	jobSubmission := utils.CreateJobSubmission(dm.ConfigFile.SystemResources, dm.ConfigFile.WorkingDir, dm.ConfigFile.StarCCM)
 
 	// Create pareto object
 	paretoHandler := pareto.NewPareto(dm.ConfigFile.DesignManagerInputParameters, jobSubmission)
