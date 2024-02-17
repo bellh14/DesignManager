@@ -14,7 +14,7 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
 
 	//TODO: make this less painful to read
 
-	jobScript, err := os.Create(fmt.Sprintf("%s/job_%d.sh", jobScriptInputs.WorkingDir, jobNumber))
+	jobScript, err := os.Create(fmt.Sprintf("%s/job.sh", jobScriptInputs.WorkingDir))
 	if err != nil {
 		// TODO: handle error
 		fmt.Println(err)
@@ -31,7 +31,7 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
 
 	jobScript.WriteString("module load starccm/17.04.007\n")
 
-	jobScript.WriteString(`starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JobNumber/$JavaMacro $WorkingDir/$JobNumber/$SimFile -np $Ntasks -time -batch-report`)
+	jobScript.WriteString(`starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks -time -batch-report`)
 
 	jobScript.WriteString("\n\n")
 	jobScript.WriteString("exit_code=$?\n")
@@ -40,7 +40,7 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
 	jobScript.WriteString("    exit $exit_code\n")
 	jobScript.WriteString("fi\n\n")
 
-	err = os.Chmod(fmt.Sprintf("%s/job_%d.sh", jobScriptInputs.WorkingDir, jobNumber), 0777)
+	err = os.Chmod(fmt.Sprintf("%s/job.sh", jobScriptInputs.WorkingDir), 0777)
 	if err != nil {
 		log.Fatal(err)
 	}

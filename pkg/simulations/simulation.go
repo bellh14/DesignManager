@@ -34,6 +34,7 @@ func (simulation *Simulation) Run() {
 	simulation.CreateSimulationDirectory()
 	simulation.CopySimulationFiles()
 	simulation.InputParameters = simulation.SampleDesignParameters()
+	fmt.Print(simulation.InputParameters)
 	simulation.CreateSimulationInputFile()
 	simulation.CreateJobScript()
 	simulation.RunSimulation()
@@ -57,8 +58,9 @@ func (simulation *Simulation) CreateSimulationDirectory() {
 
 func (simulation *Simulation) CopySimulationFiles() {
 	// copy files
-	utils.CopyFile(simulation.JobSubmissionType.SimFile, simulation.JobSubmissionType.WorkingDir)
-	utils.CopyFile(simulation.JobSubmissionType.JavaMacro, simulation.JobSubmissionType.WorkingDir)
+	fmt.Printf("Copying files to %s\n", simulation.JobSubmissionType.WorkingDir)
+	utils.CopyFile(simulation.JobSubmissionType.SimFile, simulation.JobSubmissionType.WorkingDir+simulation.JobSubmissionType.SimFile)
+	utils.CopyFile(simulation.JobSubmissionType.JavaMacro, simulation.JobSubmissionType.WorkingDir+simulation.JobSubmissionType.JavaMacro)
 }
 
 func (simulation *Simulation) CreateSimulationInputFile() {

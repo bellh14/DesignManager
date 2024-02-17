@@ -24,5 +24,5 @@ func main() {
 
 	// Create design manager
 	designManager := designmanager.NewDesignManager(config)
-	designManager.Run()
+	designManager.HandlePareto()
 }

@@ -35,7 +35,7 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 func (dm *DesignManager) HandlePareto() {
 
 	jobSubmission := utils.CreateJobSubmission(dm.ConfigFile.SystemResources, dm.ConfigFile.WorkingDir, dm.ConfigFile.StarCCM)
-
+	fmt.Println("Job Submission: ", jobSubmission)
 	// Create pareto object
 	// paretoHandler := pareto.NewPareto(dm.ConfigFile.DesignManagerInputParameters, jobSubmission)
 
@@ -44,7 +44,8 @@ func (dm *DesignManager) HandlePareto() {
 
 	results := make([]types.SimulationResult, 0)
 	for i := 0; i < 8; i++ {
-		jobs.HandleSimulations(&jobSubmission, &results, 52)
+		fmt.Println("Running simulation family: ", i)
+		jobs.HandleSimulations(&jobSubmission, &results, 25)
 	}
 
 }
