@@ -29,7 +29,9 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
 
 	// jobScript.WriteString("mkdir $WorkingDir/$JobNumber\n\n")
 
-	jobScript.WriteString(`$Path/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JobNumber/$JavaMacro $WorkingDir/$JobNumber/$SimFile -np $Ntasks -time -batch-report`)
+	jobScript.WriteString("module load starccm/17.04.007\n")
+
+	jobScript.WriteString(`starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JobNumber/$JavaMacro $WorkingDir/$JobNumber/$SimFile -np $Ntasks -time -batch-report`)
 
 	jobScript.WriteString("\n\n")
 	jobScript.WriteString("exit_code=$?\n")

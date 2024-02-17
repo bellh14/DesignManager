@@ -25,13 +25,18 @@ func NewSimulation(jobSubmission *types.JobSubmissionType, simID int) *Simulatio
 	}
 }
 
+func (simulation *Simulation) SetWorkingDir(workingDir string) {
+	simulation.JobSubmissionType.WorkingDir = workingDir + fmt.Sprint(simulation.JobNumber)
+}
+
 func (simulation *Simulation) Run() {
+	simulation.SetWorkingDir(simulation.JobSubmissionType.WorkingDir)
 	simulation.CreateSimulationDirectory()
 	simulation.CopySimulationFiles()
 	simulation.InputParameters = simulation.SampleDesignParameters()
 	simulation.CreateSimulationInputFile()
 	simulation.CreateJobScript()
-
+	simulation.RunSimulation()
 	// simulation.DesignObjectiveResults = simulation.RunSimulation()
 }
 
