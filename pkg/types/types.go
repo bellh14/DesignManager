@@ -62,6 +62,7 @@ type JobSubmissionType struct {
 	PodKey     string
 	JavaMacro  string
 	SimFile    string
+	DesignParameters []DesignParameter
 }
 
 type ParameterSamples struct {
