@@ -1,9 +1,9 @@
 package pareto
 
 import (
-	"github.com/bellh14/DFRDesignManager/pkg/types"
-	// "github.com/bellh14/DFRDesignManager/pkg/utils"
-	// "github.com/bellh14/DFRDesignManager/pkg/jobs"
+	"github.com/bellh14/DesignManager/pkg/types"
+	// "github.com/bellh14/DesignManager/pkg/utils"
+	// "github.com/bellh14/DesignManager/pkg/jobs"
 )
 
 type ParetoHandler struct {

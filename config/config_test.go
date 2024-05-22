@@ -2,8 +2,8 @@ package config_test
 
 import (
 	"testing"
-	"github.com/bellh14/DFRDesignManager/config"
-	"github.com/bellh14/DFRDesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/config"
+	"github.com/bellh14/DesignManager/pkg/types"
 )
 
 func compareSystemResourcesType(t *testing.T, got, want types.SystemResourcesType) {

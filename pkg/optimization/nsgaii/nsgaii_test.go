@@ -2,7 +2,7 @@ package nsgaii_test
 
 import (
 	"testing"
-	"github.com/bellh14/DFRDesignManager/pkg/optimization/nsgaii"
+	"github.com/bellh14/DesignManager/pkg/optimization/nsgaii"
 )
 
 func TestFindMaxes(t *testing.T) {

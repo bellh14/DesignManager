@@ -6,8 +6,8 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/bellh14/DFRDesignManager/pkg/types"
-	"github.com/bellh14/DFRDesignManager/pkg/utils"
+	"github.com/bellh14/DesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/pkg/utils"
 )
 
 func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {

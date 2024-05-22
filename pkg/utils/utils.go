@@ -3,7 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bellh14/DFRDesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/pkg/types"
 	"io"
 	"math/rand"
 	"os"

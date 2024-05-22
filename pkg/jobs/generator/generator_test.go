@@ -1,8 +1,8 @@
 package generator_test
 
 import (
-	"github.com/bellh14/DFRDesignManager/pkg/jobs/generator"
-	"github.com/bellh14/DFRDesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/pkg/jobs/generator"
+	"github.com/bellh14/DesignManager/pkg/types"
 	"testing"
 )
 

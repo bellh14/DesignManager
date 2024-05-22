@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/bellh14/DFRDesignManager/config"
-	"github.com/bellh14/DFRDesignManager/pkg/designmanager"
+	"github.com/bellh14/DesignManager/config"
+	"github.com/bellh14/DesignManager/pkg/designmanager"
 	"os"
 )
 

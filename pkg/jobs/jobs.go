@@ -2,8 +2,8 @@ package jobs
 
 import (
 	"fmt"
-	"github.com/bellh14/DFRDesignManager/pkg/simulations"
-	"github.com/bellh14/DFRDesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/pkg/simulations"
+	"github.com/bellh14/DesignManager/pkg/types"
 	"sync"
 )
 

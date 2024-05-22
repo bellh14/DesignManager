@@ -3,7 +3,7 @@
 package config
 
 import (
-	"github.com/bellh14/DFRDesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/pkg/types"
 	"os"
 	"io"
 	"encoding/json"

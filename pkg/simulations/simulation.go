@@ -2,11 +2,11 @@ package simulations
 
 import (
 	"fmt"
-	"github.com/bellh14/DFRDesignManager/pkg/jobs/generator"
-	"github.com/bellh14/DFRDesignManager/pkg/types"
-	"github.com/bellh14/DFRDesignManager/pkg/utils"
-	e "github.com/bellh14/DFRDesignManager/pkg/utils/err"
-	"github.com/bellh14/DFRDesignManager/pkg/utils/math/sampling"
+	"github.com/bellh14/DesignManager/pkg/jobs/generator"
+	"github.com/bellh14/DesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/pkg/utils"
+	e "github.com/bellh14/DesignManager/pkg/utils/err"
+	"github.com/bellh14/DesignManager/pkg/utils/math/sampling"
 	"os"
 	"os/exec"
 )

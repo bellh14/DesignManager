@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/bellh14/DFRDesignManager/pkg/types"
-	"github.com/bellh14/DFRDesignManager/pkg/utils/err"
+	"github.com/bellh14/DesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/pkg/utils/err"
 )
 
 type Logger struct {
