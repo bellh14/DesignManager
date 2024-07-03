@@ -2,11 +2,12 @@ package err
 
 import (
 	"fmt"
+
 )
 
 type SimulationError struct {
 	JobNumber int
-	Err error
+	Err       error
 }
 
 func (e *SimulationError) SimError() string {

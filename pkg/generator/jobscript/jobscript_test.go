@@ -1,9 +1,11 @@
-package generator_test
+package jobscript_test
 
 import (
-	"github.com/bellh14/DesignManager/pkg/jobs/generator"
-	"github.com/bellh14/DesignManager/pkg/types"
 	"testing"
+
+	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
+	"github.com/bellh14/DesignManager/pkg/types"
+
 )
 
 func TestGenerateJobScript(t *testing.T) {
@@ -15,6 +17,5 @@ func TestGenerateJobScript(t *testing.T) {
 		JavaMacro:  "DMPareto.java",
 		SimFile:    "sim.sim",
 	}
-	generator.GenerateJobScript(jobScriptInputs, 1)
-
+	jobscript.GenerateJobScript(jobScriptInputs, 1)
 }

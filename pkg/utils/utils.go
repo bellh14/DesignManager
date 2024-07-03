@@ -1,15 +1,17 @@
 package utils
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/bellh14/DesignManager/pkg/types"
 	"io"
 	"math/rand"
 	"os"
 	"reflect"
 	"time"
-	"bufio"
+
+	"github.com/bellh14/DesignManager/pkg/types"
+
 )
 
 func PrettyPrint(i interface{}) string {
@@ -30,33 +32,33 @@ func WriteStructOfBashVariables(values reflect.Value, file *os.File) {
 }
 
 func ReadLineByNumber(filePath string, lineNumber int) (string, error) {
-    // Open the file
-    file, err := os.Open(filePath)
-    if err != nil {
-        return "", err
-    }
-    defer file.Close()
+	// Open the file
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
 
-    // Create a new scanner to read the file
-    scanner := bufio.NewScanner(file)
-    currentLine := 1
+	// Create a new scanner to read the file
+	scanner := bufio.NewScanner(file)
+	currentLine := 1
 
-    // Read the file line by line
-    for scanner.Scan() {
-        if currentLine == lineNumber {
-            // Found the line, return its content
-            return scanner.Text(), nil
-        }
-        currentLine++
-    }
+	// Read the file line by line
+	for scanner.Scan() {
+		if currentLine == lineNumber {
+			// Found the line, return its content
+			return scanner.Text(), nil
+		}
+		currentLine++
+	}
 
-    // Check for errors during scanning
-    if err := scanner.Err(); err != nil {
-        return "", err
-    }
+	// Check for errors during scanning
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
 
-    // Line number was not found
-    return "", fmt.Errorf("line number %d out of range", lineNumber)
+	// Line number was not found
+	return "", fmt.Errorf("line number %d out of range", lineNumber)
 }
 
 func CopyFile(src, dst string) error {

@@ -4,8 +4,8 @@ import (
 	"math"
 
 	"github.com/bellh14/DesignManager/pkg/types"
-)
 
+)
 
 func CalculateMean(values []float64) float64 {
 	var sum float64

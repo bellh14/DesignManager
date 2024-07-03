@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/designmanager"
-	"os"
 )
 
 func main() {
@@ -24,5 +25,5 @@ func main() {
 
 	// Create design manager
 	designManager := designmanager.NewDesignManager(config)
-	designManager.HandlePareto()
+	designManager.Run()
 }

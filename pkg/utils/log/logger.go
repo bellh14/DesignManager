@@ -6,23 +6,23 @@ import (
 	"os"
 
 	"github.com/bellh14/DesignManager/pkg/types"
-	"github.com/bellh14/DesignManager/pkg/utils/err"
+	"github.com/bellh14/DesignManager/pkg/err"
+
 )
 
 type Logger struct {
 	*log.Logger
 }
 
-func Setup(logFile string){
+func Setup(logFile string) {
 	// Create log file
-	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
 	if err != nil {
 		log.Fatalf("Error opening log file: %v", err)
 	}
 
 	log.SetOutput(file)
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-
 }
 
 func (logger *Logger) Info(message string) {
@@ -33,15 +33,15 @@ func (logger *Logger) Error(message string) {
 	logger.Output(2, message)
 }
 
-func (logger *Logger) SimError (jobNumber int, e error) {
+func (logger *Logger) SimError(jobNumber int, e error) {
 	simError := &err.SimulationError{
 		JobNumber: jobNumber,
-		Err: e,
+		Err:       e,
 	}
 	logger.Output(2, simError.SimError())
 }
 
-func (logger *Logger) GenerationResults (generationResults types.GenerationResults){
+func (logger *Logger) GenerationResults(generationResults types.GenerationResults) {
 	logger.Output(2, fmt.Sprintf("Generation Results: %v", generationResults))
 	if len(generationResults.FailedSims) > 0 {
 		for _, sim := range generationResults.FailedSims {

@@ -2,13 +2,15 @@ package simulations
 
 import (
 	"fmt"
-	"github.com/bellh14/DesignManager/pkg/jobs/generator"
-	"github.com/bellh14/DesignManager/pkg/types"
-	"github.com/bellh14/DesignManager/pkg/utils"
-	e "github.com/bellh14/DesignManager/pkg/utils/err"
-	"github.com/bellh14/DesignManager/pkg/utils/math/sampling"
 	"os"
 	"os/exec"
+
+	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
+	"github.com/bellh14/DesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/pkg/utils"
+	e "github.com/bellh14/DesignManager/pkg/err"
+	"github.com/bellh14/DesignManager/pkg/utils/math/sampling"
+
 )
 
 type Simulation struct {
@@ -49,7 +51,7 @@ func (simulation *Simulation) SampleDesignParameters() []types.SimInput {
 
 func (simulation *Simulation) CreateSimulationDirectory() {
 	// create directory
-	err := os.MkdirAll(simulation.JobSubmissionType.WorkingDir, 0777)
+	err := os.MkdirAll(simulation.JobSubmissionType.WorkingDir, 0o777)
 	if err != nil {
 		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
 		simError.SimError()
@@ -75,14 +77,13 @@ func (simulation *Simulation) CreateSimulationInputFile() {
 }
 
 func (simulation *Simulation) CreateJobScript() {
-	generator.GenerateJobScript(simulation.JobSubmissionType, simulation.JobNumber)
+	jobscript.GenerateJobScript(simulation.JobSubmissionType, simulation.JobNumber)
 }
 
 func (simulation *Simulation) RunSimulation() {
 	// exec job script
 	cmd := exec.Command(simulation.JobSubmissionType.WorkingDir + "/job_" + fmt.Sprint(simulation.JobNumber) + ".sh")
 	_, err := cmd.CombinedOutput()
-
 	if err != nil {
 		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
 		simError.SimError()

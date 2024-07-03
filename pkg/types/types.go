@@ -37,7 +37,7 @@ type DesignManagerInputParameters struct {
 
 type DesignObjective struct {
 	Name   string
-	Goal  string
+	Goal   string
 	Weight float64
 }
 
@@ -56,12 +56,12 @@ type ConfigFile struct {
 }
 
 type JobSubmissionType struct {
-	WorkingDir string
-	Ntasks     int
-	Path       string
-	PodKey     string
-	JavaMacro  string
-	SimFile    string
+	WorkingDir       string
+	Ntasks           int
+	Path             string
+	PodKey           string
+	JavaMacro        string
+	SimFile          string
 	DesignParameters []DesignParameter
 }
 
@@ -71,27 +71,27 @@ type ParameterSamples struct {
 
 type FailedSimulation struct {
 	JobNumber int
-	Cause string
+	Cause     string
 }
 
 type DesignObjectiveResult struct {
-	DesignObjectiveName string
+	DesignObjectiveName   string
 	DesignObjectiveResult float64
 }
 
 type SimInput struct {
-	Name string
+	Name  string
 	Value float64
 }
 
 type SimulationResult struct {
-	JobNumber int
-	InputParameters []SimInput
+	JobNumber              int
+	InputParameters        []SimInput
 	DesignObjectiveResults []float64
 }
 
 type GenerationResults struct {
-	Number int
-	FailedSims []FailedSimulation
+	Number        int
+	FailedSims    []FailedSimulation
 	SucceededSims []int
 }

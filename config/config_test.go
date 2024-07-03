@@ -2,8 +2,10 @@ package config_test
 
 import (
 	"testing"
+
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/types"
+
 )
 
 func compareSystemResourcesType(t *testing.T, got, want types.SystemResourcesType) {
@@ -72,30 +74,30 @@ func TestParseConfigFile(t *testing.T) {
 
 	expectedSystemResources := types.SystemResourcesType{
 		Partition: "normal",
-		Nodes: 16,
-		Ntasks: 16,
+		Nodes:     16,
+		Ntasks:    16,
 	}
 
 	expectedWorkingDir := "/scratch/ganymede/<user>/DM/"
 
 	expectedStarCCM := types.StarCCM{
-		Path: "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
-		PodKey: "<podkey>",
+		Path:      "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
+		PodKey:    "<podkey>",
 		JavaMacro: "macro.java",
-		SimFile: "simfile.sim",
+		SimFile:   "simfile.sim",
 	}
 
 	expectedDesignParameter1 := types.DesignParameter{
 		Name: "Design Parameter 1",
-		Min: 0.0,
-		Max: 1.0,
+		Min:  0.0,
+		Max:  1.0,
 		Step: 0.1,
 	}
 
 	expectedDesignParameter2 := types.DesignParameter{
 		Name: "Design Parameter 2",
-		Min: 0.0,
-		Max: 1.0,
+		Min:  0.0,
+		Max:  1.0,
 		Step: 0.1,
 	}
 
@@ -105,15 +107,15 @@ func TestParseConfigFile(t *testing.T) {
 	}
 
 	expectedDesignObjective1 := types.DesignObjective{
-		Name: "Design Objective 1",
+		Name:   "Design Objective 1",
 		Weight: 1.0,
-		Goal: "Maximize",
+		Goal:   "Maximize",
 	}
 
 	expectedDesignObjective2 := types.DesignObjective{
-		Name: "Design Objective 2",
+		Name:   "Design Objective 2",
 		Weight: 0.75,
-		Goal: "Minimize",
+		Goal:   "Minimize",
 	}
 
 	expectedDesignObjectives := []types.DesignObjective{
@@ -122,21 +124,20 @@ func TestParseConfigFile(t *testing.T) {
 	}
 
 	expectedDesignManagerParameters := types.DesignManagerInputParameters{
-		NumSims: 100,
-		NtasksPerSim: -1,
-		StudyType: "Pareto",
+		NumSims:               100,
+		NtasksPerSim:          -1,
+		StudyType:             "Pareto",
 		OptimizationAlgorithm: "NSGA-II",
-		DesignParameters: expectedDesignParameters,
-		DesignObjectives: expectedDesignObjectives,
+		DesignParameters:      expectedDesignParameters,
+		DesignObjectives:      expectedDesignObjectives,
 	}
 
 	expectedConfigFile := types.ConfigFile{
-		SystemResources: expectedSystemResources,
-		WorkingDir: expectedWorkingDir,
-		StarCCM: expectedStarCCM,
+		SystemResources:              expectedSystemResources,
+		WorkingDir:                   expectedWorkingDir,
+		StarCCM:                      expectedStarCCM,
 		DesignManagerInputParameters: expectedDesignManagerParameters,
 	}
 
 	compareAll(t, configFile, expectedConfigFile)
-
 }
