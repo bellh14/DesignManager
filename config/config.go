@@ -3,15 +3,16 @@
 package config
 
 import (
-	"github.com/bellh14/DesignManager/pkg/types"
-	"os"
-	"io"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+
+	"github.com/bellh14/DesignManager/pkg/types"
+
 )
 
 func ParseConfigFile(configFilePath string) types.ConfigFile {
-
 	configFile, err := os.Open(configFilePath)
 	if err != nil {
 		// TODO: handle error

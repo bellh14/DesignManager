@@ -1,4 +1,4 @@
-package generator
+package jobscript
 
 import (
 	"fmt"
@@ -8,11 +8,11 @@ import (
 
 	"github.com/bellh14/DesignManager/pkg/types"
 	"github.com/bellh14/DesignManager/pkg/utils"
+
 )
 
 func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
-
-	//TODO: make this less painful to read
+	// TODO: make this less painful to read
 
 	jobScript, err := os.Create(fmt.Sprintf("%s/job.sh", jobScriptInputs.WorkingDir))
 	if err != nil {
@@ -40,7 +40,7 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
 	jobScript.WriteString("    exit $exit_code\n")
 	jobScript.WriteString("fi\n\n")
 
-	err = os.Chmod(fmt.Sprintf("%s/job.sh", jobScriptInputs.WorkingDir), 0777)
+	err = os.Chmod(fmt.Sprintf("%s/job.sh", jobScriptInputs.WorkingDir), 0o777)
 	if err != nil {
 		log.Fatal(err)
 	}

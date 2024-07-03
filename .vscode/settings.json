@@ -1,3 +1,6 @@
 {
-    "editor.defaultFormatter": "golang.go"
+    "go.useLanguageServer": true,
+    "gopls": {
+        "formatting.gofumpt": true
+    }
 }

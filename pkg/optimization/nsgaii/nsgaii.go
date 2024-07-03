@@ -3,6 +3,7 @@ package nsgaii
 import (
 	"math"
 	"sort"
+
 )
 
 // implements the NSGA-II algorithm
@@ -29,11 +30,9 @@ type Solution struct {
 }
 
 func (nsgaii *NSGAII) Run() {
-
 }
 
 func (nsgaii *NSGAII) SortByObjective(objective int) (sortedSolutions []*Solution) {
-
 	sortedSolutions = make([]*Solution, len(nsgaii.CurrentFront.Solutions))
 	copy(sortedSolutions, nsgaii.CurrentFront.Solutions)
 	sort.Slice(sortedSolutions, func(i, j int) bool {
@@ -41,11 +40,9 @@ func (nsgaii *NSGAII) SortByObjective(objective int) (sortedSolutions []*Solutio
 	})
 
 	return sortedSolutions
-
 }
 
 func (nsgaii *NSGAII) FindObjectiveMaxes() {
-
 	for i := 0; i < len(nsgaii.CurrentFront.Solutions[0].DesignObjectives); i++ {
 		max := math.Inf(-1)
 		for _, s := range nsgaii.CurrentFront.Solutions {
@@ -55,11 +52,9 @@ func (nsgaii *NSGAII) FindObjectiveMaxes() {
 		}
 		nsgaii.ObjectiveMaxes[i] = max
 	}
-
 }
 
 func (nsgaii *NSGAII) FindObjectiveMins() {
-
 	for i := 0; i < len(nsgaii.CurrentFront.Solutions[0].DesignObjectives); i++ {
 		min := math.Inf(1)
 		for _, s := range nsgaii.CurrentFront.Solutions {
@@ -69,11 +64,9 @@ func (nsgaii *NSGAII) FindObjectiveMins() {
 		}
 		nsgaii.ObjectiveMins[i] = min
 	}
-
 }
 
 func (nsgaii *NSGAII) CalculateCrowdingDistance() {
-
 	for _, s := range nsgaii.CurrentFront.Solutions {
 		s.Distance = 0
 	}
@@ -84,29 +77,24 @@ func (nsgaii *NSGAII) CalculateCrowdingDistance() {
 		nsgaii.CurrentFront.Solutions[len(nsgaii.CurrentFront.Solutions)-1].Distance = 1000000000
 		for j := 1; j < len(nsgaii.CurrentFront.Solutions)-1; j++ {
 			if i == 0 {
-				//total df so want higher values
+				// total df so want higher values
 				nsgaii.CurrentFront.Solutions[j].Distance += (nsgaii.CurrentFront.Solutions[j+1].DesignObjectives[i] - nsgaii.CurrentFront.Solutions[j-1].DesignObjectives[i]) / math.Abs(nsgaii.ObjectiveMins[i]-nsgaii.ObjectiveMaxes[i])
 			} else {
 				// drag so want lower values
 				nsgaii.CurrentFront.Solutions[j].Distance += (nsgaii.CurrentFront.Solutions[j+1].DesignObjectives[i] - nsgaii.CurrentFront.Solutions[j-1].DesignObjectives[i]) / (nsgaii.ObjectiveMaxes[i] - nsgaii.ObjectiveMins[i])
-
 			}
 		}
 	}
-
 }
 
 func (nsgaii *NSGAII) CompareCrowdingDistance(s1 *Solution, s2 *Solution) bool {
-
 	if s1.Rank < s2.Rank || ((s1.Rank == s2.Rank) && (s1.Distance < s2.Distance)) {
 		return true
 	}
 	return false
-
 }
 
 func (nsgaii *NSGAII) InitalizePopulation() {
-
 }
 
 func (nsgaii *NSGAII) RankSolutions() {
@@ -140,7 +128,6 @@ func (nsgaii *NSGAII) RankSolutions() {
 		}
 		nsgaii.NextFront.Solutions = nextFront
 	}
-
 }
 
 func Dominates(solution1 *Solution, solution2 *Solution) bool {

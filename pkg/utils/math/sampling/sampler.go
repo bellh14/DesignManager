@@ -4,11 +4,12 @@ import (
 	"github.com/bellh14/DesignManager/pkg/types"
 	"github.com/bellh14/DesignManager/pkg/utils"
 	"github.com/bellh14/DesignManager/pkg/utils/math/probability"
+
 )
 
 type Sampler struct {
 	DesignParameters []types.DesignParameter
-	//Distribution   string  TODO: implement this
+	// Distribution   string  TODO: implement this
 }
 
 func NewSampler(job types.JobSubmissionType) *Sampler {

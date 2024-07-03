@@ -3,6 +3,7 @@ package probability
 import (
 	"math"
 	"math/rand"
+
 )
 
 func UniformDistribution(min, max float64) float64 {
