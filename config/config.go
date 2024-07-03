@@ -8,21 +8,11 @@ import (
 	"io"
 	"os"
 
+	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 	"github.com/bellh14/DesignManager/pkg/types"
 
 )
 
-type SlurmConfig struct {
-	JobName    string `json:"jobName"`
-	Partition  string `json:"partition"`
-	Nodes      int    `json:"nodes"`
-	Ntasks     int    `json:"ntasks"`
-	WallTime   string `json:"wallTime"` // "hh:mm:ss"
-	Email      string `json:"email"`
-	MailType   string `json:"mailType"` // "begin", "end", "fail", "all"
-	OutputFile string `json:"outputFile"`
-	ErrorFile  string `json:"errorFile"`
-}
 type DesignParameter struct {
 	Name  string  `json:"name"`
 	Units string  `json:"units"`
@@ -38,9 +28,9 @@ type DesignStudyConfig struct {
 }
 
 type ConfigFile struct {
-	UseDM       bool        `json:"useDM"` // use dm or just output generated scripts
-	OutputDir   string      `json:"outputDir"`
-	SlurmConfig SlurmConfig `json:"slurmConfig"`
+	UseDM       bool                    `json:"useDM"` // use dm or just output generated scripts
+	OutputDir   string                  `json:"outputDir"`
+	SlurmConfig batchsystem.SlurmConfig `json:"slurmConfig"`
 }
 
 func ParseDesignManagerConfigFile(configFilePath string) types.ConfigFile {
