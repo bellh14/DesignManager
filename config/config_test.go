@@ -68,9 +68,9 @@ func compareAll(t *testing.T, got, want types.ConfigFile) {
 	compareDesignManagerInputParameters(t, got.DesignManagerInputParameters, want.DesignManagerInputParameters)
 }
 
-func TestParseConfigFile(t *testing.T) {
+func TestParseDesignManagerConfigFile(t *testing.T) {
 	configFilePath := "../data/inputs/DesignManagerConfig.json"
-	configFile := config.ParseConfigFile(configFilePath)
+	configFile := config.ParseDesignManagerConfigFile(configFilePath)
 
 	expectedSystemResources := types.SystemResourcesType{
 		Partition: "normal",

@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bellh14/DesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/config"
 	// "github.com/bellh14/DesignManager/pkg/optimization/pareto"
 	// "github.com/bellh14/DesignManager/pkg/utils"
+
 )
 
 type DesignManager struct {
-	ConfigFile types.ConfigFile
+	ConfigFile config.ConfigFile
 }
 
-func NewDesignManager(config types.ConfigFile) *DesignManager {
+func NewDesignManager(config config.ConfigFile) *DesignManager {
 	return &DesignManager{
 		ConfigFile: config,
 	}
