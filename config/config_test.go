@@ -87,17 +87,19 @@ func TestParseDesignManagerConfigFile(t *testing.T) {
 	}
 
 	expectedDesignParameter1 := types.DesignParameter{
-		Name: "Design Parameter 1",
-		Min:  0.0,
-		Max:  1.0,
-		Step: 0.1,
+		Name:    "Design Parameter 1",
+		Min:     0.0,
+		Max:     1.0,
+		Step:    0.1,
+		NumSims: 8,
 	}
 
 	expectedDesignParameter2 := types.DesignParameter{
-		Name: "Design Parameter 2",
-		Min:  0.0,
-		Max:  1.0,
-		Step: 0.1,
+		Name:    "Design Parameter 2",
+		Min:     0.0,
+		Max:     1.0,
+		Step:    0.1,
+		NumSims: 8,
 	}
 
 	expectedDesignParameters := []types.DesignParameter{

@@ -2,12 +2,15 @@ package utils
 
 import (
 	"bufio"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"os"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/bellh14/DesignManager/pkg/types"
@@ -102,24 +105,30 @@ func SeedRand() {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-func WriteParameterCsv(samples []types.SimInput, file *os.File) {
-	for i, sample := range samples {
-		file.WriteString(fmt.Sprintf("%v", sample.Value))
-		if i < len(samples)-1 {
-			file.WriteString(",")
+func WriteParameterCsv(samples [][]float64, file *os.File) {
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	for _, row := range samples {
+		strRow := make([]string, len(row))
+		for i, value := range row {
+			strRow[i] = strconv.FormatFloat(value, 'f', -1, 64)
+		}
+
+		// Write the string slice to the CSV file
+		if err := writer.Write(strRow); err != nil {
+			log.Fatalf("failed to write row: %s", err)
 		}
 	}
-	file.WriteString("\n")
 }
 
-func WriteParameterCsvHeader(designParameters []types.SimInput, file *os.File) {
-	for i, designParameter := range designParameters {
-		file.WriteString(designParameter.Name)
-		if i < len(designParameters)-1 {
-			file.WriteString(",")
-		}
+func WriteParameterCsvHeader(designParameters []string, file *os.File) {
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	if err := writer.Write(designParameters); err != nil {
+		fmt.Println("Error: ", err)
 	}
-	file.WriteString("\n")
 }
 
 func CreateJobSubmission(systemResources types.SystemResourcesType, workingDir string, starCCM types.StarCCM) types.JobSubmissionType {

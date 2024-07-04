@@ -4,8 +4,13 @@ import (
 	"math"
 
 	"github.com/bellh14/DesignManager/pkg/types"
-
 )
+
+const tolerance = 1e-3
+
+func AlmostEqual(a, b float64) bool {
+	return math.Abs(a-b) <= tolerance
+}
 
 func CalculateMean(values []float64) float64 {
 	var sum float64
@@ -49,4 +54,24 @@ func CalculateParamterPopulation(designParameter *types.DesignParameter) []float
 		population[i] = designParameter.Min + float64(i)*designParameter.Step
 	}
 	return population
+}
+
+func Transpose(data [][]float64) [][]float64 {
+	if len(data) == 0 || len(data[0]) ==
+		0 {
+		return nil
+	}
+
+	transposed := make([][]float64, len(data[0]))
+	for i := range transposed {
+		transposed[i] = make([]float64, len(data))
+	}
+
+	for i, row := range data {
+		for j := range row {
+			transposed[j][i] = data[i][j]
+		}
+	}
+
+	return transposed
 }

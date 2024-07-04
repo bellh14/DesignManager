@@ -5,12 +5,13 @@ type SystemArgs struct {
 }
 
 type DesignParameter struct {
-	Name   string
-	Min    float64
-	Max    float64
-	Step   float64
-	Mean   float64
-	StdDev float64
+	Name    string
+	Min     float64
+	Max     float64
+	Step    float64
+	Mean    float64
+	StdDev  float64
+	NumSims int
 }
 
 type SystemResourcesType struct {
