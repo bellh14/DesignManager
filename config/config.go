@@ -10,7 +10,6 @@ import (
 
 	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 	"github.com/bellh14/DesignManager/pkg/types"
-
 )
 
 type DesignParameter struct {
@@ -45,7 +44,10 @@ func ParseDesignManagerConfigFile(configFilePath string) types.ConfigFile {
 
 	var config types.ConfigFile
 
-	json.Unmarshal(byteValue, &config)
+	err = json.Unmarshal(byteValue, &config)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return config
 }
 
@@ -61,6 +63,9 @@ func ParseConfigFile(configFilePath string) ConfigFile {
 
 	var config ConfigFile
 
-	json.Unmarshal(byteValue, &config)
+	err = json.Unmarshal(byteValue, &config)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return config
 }

@@ -8,15 +8,21 @@ import (
 
 	"github.com/bellh14/DesignManager/pkg/types"
 	"github.com/bellh14/DesignManager/pkg/utils"
-
 )
+
+type StarCCM struct {
+	StarPath  string
+	PodKey    string
+	JavaMacro string
+}
 
 func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
 	// TODO: make this less painful to read
 
-	jobScript, err := os.Create(fmt.Sprintf("%s/job.sh", jobScriptInputs.WorkingDir))
+	jobScript, err := os.Create(fmt.Sprintf("%ssim_%d.sh", jobScriptInputs.WorkingDir, jobNumber))
 	if err != nil {
 		// TODO: handle error
+
 		fmt.Println(err)
 	}
 	defer jobScript.Close()
@@ -25,13 +31,11 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
 
 	jobSubmissionValues := reflect.ValueOf(jobScriptInputs)
 
-	utils.WriteStructOfBashVariables(jobSubmissionValues, jobScript)
+	utils.WriteStructOfBashVariables(jobSubmissionValues, jobScript, []string{"DesignParameters"})
 
 	// jobScript.WriteString("mkdir $WorkingDir/$JobNumber\n\n")
 
-	jobScript.WriteString("module load starccm/17.04.007\n")
-
-	jobScript.WriteString(`starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks -time -batch-report`)
+	jobScript.WriteString(`$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks -time -batch-report`)
 
 	jobScript.WriteString("\n\n")
 	jobScript.WriteString("exit_code=$?\n")
@@ -40,7 +44,7 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
 	jobScript.WriteString("    exit $exit_code\n")
 	jobScript.WriteString("fi\n\n")
 
-	err = os.Chmod(fmt.Sprintf("%s/job.sh", jobScriptInputs.WorkingDir), 0o777)
+	err = os.Chmod(fmt.Sprintf("%ssim_%d.sh", jobScriptInputs.WorkingDir, jobNumber), 0o777)
 	if err != nil {
 		log.Fatal(err)
 	}

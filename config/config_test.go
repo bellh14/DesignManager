@@ -5,7 +5,6 @@ import (
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/types"
-
 )
 
 func compareSystemResourcesType(t *testing.T, got, want types.SystemResourcesType) {
@@ -81,7 +80,7 @@ func TestParseDesignManagerConfigFile(t *testing.T) {
 	expectedWorkingDir := "/scratch/ganymede/<user>/DM/"
 
 	expectedStarCCM := types.StarCCM{
-		Path:      "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
+		StarPath:  "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
 		PodKey:    "<podkey>",
 		JavaMacro: "macro.java",
 		SimFile:   "simfile.sim",

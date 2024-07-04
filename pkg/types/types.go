@@ -20,7 +20,7 @@ type SystemResourcesType struct {
 }
 
 type StarCCM struct {
-	Path      string
+	StarPath  string
 	PodKey    string
 	JavaMacro string
 	SimFile   string
@@ -58,7 +58,7 @@ type ConfigFile struct {
 type JobSubmissionType struct {
 	WorkingDir       string
 	Ntasks           int
-	Path             string
+	StarPath         string
 	PodKey           string
 	JavaMacro        string
 	SimFile          string

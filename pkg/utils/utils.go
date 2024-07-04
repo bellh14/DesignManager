@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/bellh14/DesignManager/pkg/types"
-
 )
 
 func PrettyPrint(i interface{}) string {
@@ -20,11 +19,26 @@ func PrettyPrint(i interface{}) string {
 }
 
 func WriteBashVariable(file *os.File, name string, value any) {
-	file.WriteString(fmt.Sprintf("%s=%v\n", name, value))
+	_, err := file.WriteString(fmt.Sprintf("%s=%v\n", name, value))
+	if err != nil {
+		fmt.Println("Error: ", err)
+	}
 }
 
-func WriteStructOfBashVariables(values reflect.Value, file *os.File) {
+func Contains(slice []string, item string) bool {
+	for _, i := range slice {
+		if i == item {
+			return true
+		}
+	}
+	return false
+}
+
+func WriteStructOfBashVariables(values reflect.Value, file *os.File, excluded []string) {
 	for i := 0; i < values.NumField(); i++ {
+		if Contains(excluded, values.Type().Field(i).Name) {
+			continue
+		}
 		value := values.Field(i)
 		name := values.Type().Field(i).Name
 		WriteBashVariable(file, name, value.Interface())
@@ -112,7 +126,7 @@ func CreateJobSubmission(systemResources types.SystemResourcesType, workingDir s
 	return types.JobSubmissionType{
 		WorkingDir: workingDir,
 		Ntasks:     systemResources.Ntasks,
-		Path:       starCCM.Path,
+		StarPath:   starCCM.StarPath,
 		PodKey:     starCCM.PodKey,
 		JavaMacro:  starCCM.JavaMacro,
 		SimFile:    starCCM.SimFile,

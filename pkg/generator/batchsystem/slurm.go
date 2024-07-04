@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"reflect"
-
 )
 
 type SlurmConfig struct {
@@ -22,7 +21,6 @@ type SlurmConfig struct {
 }
 
 func WriteSlurmVariable(file *os.File, name string, value any) {
-
 	switch name {
 
 	case "JobName":
@@ -61,7 +59,7 @@ func WriteStructOfSlurmVariables(values reflect.Value, file *os.File) {
 func GenerateSlurmScript(slurmConfig SlurmConfig) {
 	// TODO: make this less painful to read
 
-	slurmScript, err := os.Create(fmt.Sprintf("%s/%s.sh", slurmConfig.WorkingDir, slurmConfig.JobName))
+	slurmScript, err := os.Create(fmt.Sprintf("%s%s.sh", slurmConfig.WorkingDir, slurmConfig.JobName))
 	if err != nil {
 		// TODO: handle error
 		fmt.Println(err)
@@ -74,7 +72,7 @@ func GenerateSlurmScript(slurmConfig SlurmConfig) {
 
 	WriteStructOfSlurmVariables(slurmConfigValues, slurmScript)
 
-	err = os.Chmod(fmt.Sprintf("%s/job.sh", slurmConfig.WorkingDir), 0o777)
+	err = os.Chmod(fmt.Sprintf("%s%s.sh", slurmConfig.WorkingDir, slurmConfig.JobName), 0o777)
 	if err != nil {
 		log.Fatal(err)
 	}
