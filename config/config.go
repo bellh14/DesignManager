@@ -8,11 +8,31 @@ import (
 	"io"
 	"os"
 
+	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 	"github.com/bellh14/DesignManager/pkg/types"
-
 )
 
-func ParseConfigFile(configFilePath string) types.ConfigFile {
+type DesignParameter struct {
+	Name  string  `json:"name"`
+	Units string  `json:"units"`
+	Min   float64 `json:"min"`
+	Max   float64 `json:"max"`
+	Step  float64 `json:"step"`
+}
+type DesignStudyConfig struct {
+	StudyType        string            `json:"studyType"`
+	StudyConfigDir   string            `json:"studyConfigDir"` // optional dir for storing study configs ie sim inputs
+	NumSims          int               `json:"numSims"`
+	DesignParameters []DesignParameter `json:"designParameters"`
+}
+
+type ConfigFile struct {
+	UseDM       bool                    `json:"useDM"` // use dm or just output generated scripts
+	OutputDir   string                  `json:"outputDir"`
+	SlurmConfig batchsystem.SlurmConfig `json:"slurmConfig"`
+}
+
+func ParseDesignManagerConfigFile(configFilePath string) types.ConfigFile {
 	configFile, err := os.Open(configFilePath)
 	if err != nil {
 		// TODO: handle error
@@ -24,6 +44,28 @@ func ParseConfigFile(configFilePath string) types.ConfigFile {
 
 	var config types.ConfigFile
 
-	json.Unmarshal(byteValue, &config)
+	err = json.Unmarshal(byteValue, &config)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return config
+}
+
+func ParseConfigFile(configFilePath string) ConfigFile {
+	configFile, err := os.Open(configFilePath)
+	if err != nil {
+		// TODO: handle error
+		fmt.Println(err)
+	}
+	defer configFile.Close()
+
+	byteValue, _ := io.ReadAll(configFile)
+
+	var config ConfigFile
+
+	err = json.Unmarshal(byteValue, &config)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return config
 }

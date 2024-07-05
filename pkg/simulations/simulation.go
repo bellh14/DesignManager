@@ -5,12 +5,11 @@ import (
 	"os"
 	"os/exec"
 
+	e "github.com/bellh14/DesignManager/pkg/err"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
 	"github.com/bellh14/DesignManager/pkg/types"
 	"github.com/bellh14/DesignManager/pkg/utils"
-	e "github.com/bellh14/DesignManager/pkg/err"
 	"github.com/bellh14/DesignManager/pkg/utils/math/sampling"
-
 )
 
 type Simulation struct {
@@ -67,13 +66,13 @@ func (simulation *Simulation) CopySimulationFiles() {
 
 func (simulation *Simulation) CreateSimulationInputFile() {
 	// create input file
-	inputFile, err := os.Create(simulation.JobSubmissionType.WorkingDir + "/input.csv")
-	if err != nil {
-		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
-		simError.SimError()
-	}
-	utils.WriteParameterCsvHeader(simulation.InputParameters, inputFile)
-	utils.WriteParameterCsv(simulation.InputParameters, inputFile)
+	// inputFile, err := os.Create(simulation.JobSubmissionType.WorkingDir + "/input.csv")
+	// if err != nil {
+	// 	simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
+	// 	simError.SimError()
+	// }
+	// utils.WriteParameterCsvHeader(simulation.InputParameters, inputFile)
+	// utils.WriteParameterCsv(simulation.InputParameters, inputFile)
 }
 
 func (simulation *Simulation) CreateJobScript() {

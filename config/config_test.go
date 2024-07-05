@@ -5,7 +5,6 @@ import (
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/types"
-
 )
 
 func compareSystemResourcesType(t *testing.T, got, want types.SystemResourcesType) {
@@ -68,9 +67,9 @@ func compareAll(t *testing.T, got, want types.ConfigFile) {
 	compareDesignManagerInputParameters(t, got.DesignManagerInputParameters, want.DesignManagerInputParameters)
 }
 
-func TestParseConfigFile(t *testing.T) {
+func TestParseDesignManagerConfigFile(t *testing.T) {
 	configFilePath := "../data/inputs/DesignManagerConfig.json"
-	configFile := config.ParseConfigFile(configFilePath)
+	configFile := config.ParseDesignManagerConfigFile(configFilePath)
 
 	expectedSystemResources := types.SystemResourcesType{
 		Partition: "normal",
@@ -81,24 +80,26 @@ func TestParseConfigFile(t *testing.T) {
 	expectedWorkingDir := "/scratch/ganymede/<user>/DM/"
 
 	expectedStarCCM := types.StarCCM{
-		Path:      "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
+		StarPath:  "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
 		PodKey:    "<podkey>",
 		JavaMacro: "macro.java",
 		SimFile:   "simfile.sim",
 	}
 
 	expectedDesignParameter1 := types.DesignParameter{
-		Name: "Design Parameter 1",
-		Min:  0.0,
-		Max:  1.0,
-		Step: 0.1,
+		Name:    "Design Parameter 1",
+		Min:     0.0,
+		Max:     1.0,
+		Step:    0.1,
+		NumSims: 8,
 	}
 
 	expectedDesignParameter2 := types.DesignParameter{
-		Name: "Design Parameter 2",
-		Min:  0.0,
-		Max:  1.0,
-		Step: 0.1,
+		Name:    "Design Parameter 2",
+		Min:     0.0,
+		Max:     1.0,
+		Step:    0.1,
+		NumSims: 8,
 	}
 
 	expectedDesignParameters := []types.DesignParameter{
