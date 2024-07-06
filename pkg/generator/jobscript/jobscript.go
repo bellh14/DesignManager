@@ -6,23 +6,25 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/bellh14/DesignManager/pkg/types"
 	"github.com/bellh14/DesignManager/pkg/utils"
+
 )
 
-type StarCCM struct {
-	StarPath  string
-	PodKey    string
-	JavaMacro string
+type JobSubmission struct {
+	WorkingDir string
+	Ntasks     int
+	StarPath   string
+	PodKey     string
+	JavaMacro  string
+	SimFile    string
 }
 
-func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
+func GenerateJobScript(jobScriptInputs JobSubmission, jobNumber int) {
 	// TODO: make this less painful to read
-
-	jobScript, err := os.Create(fmt.Sprintf("%ssim_%d.sh", jobScriptInputs.WorkingDir, jobNumber))
+	jobDir := jobScriptInputs.WorkingDir + "/" + fmt.Sprint(jobNumber)
+	jobScript, err := os.Create(fmt.Sprintf("%s/sim_%d.sh", jobDir, jobNumber))
 	if err != nil {
 		// TODO: handle error
-
 		fmt.Println(err)
 	}
 	defer jobScript.Close()
@@ -31,7 +33,7 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
 
 	jobSubmissionValues := reflect.ValueOf(jobScriptInputs)
 
-	utils.WriteStructOfBashVariables(jobSubmissionValues, jobScript, []string{"DesignParameters"})
+	utils.WriteStructOfBashVariables(jobSubmissionValues, jobScript, []string{})
 
 	// jobScript.WriteString("mkdir $WorkingDir/$JobNumber\n\n")
 
@@ -44,7 +46,7 @@ func GenerateJobScript(jobScriptInputs types.JobSubmissionType, jobNumber int) {
 	jobScript.WriteString("    exit $exit_code\n")
 	jobScript.WriteString("fi\n\n")
 
-	err = os.Chmod(fmt.Sprintf("%ssim_%d.sh", jobScriptInputs.WorkingDir, jobNumber), 0o777)
+	err = os.Chmod(fmt.Sprintf("%s/sim_%d.sh", jobDir, jobNumber), 0o777)
 	if err != nil {
 		log.Fatal(err)
 	}

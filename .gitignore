@@ -1,2 +1,7 @@
 bin
 bin/DesignManager
+test/siminputfiles/
+test/testoutput/1/AirfoilAOA.java
+test/testoutput/1/InputParams.csv
+test/testoutput/1/sim_1.sh
+test/testoutput/1/testsim.sim

@@ -29,6 +29,18 @@ type StudyInput struct {
 	SimInputSamples [][]float64
 }
 
+type SimInputGenerator struct {
+	SimInputsFileName string
+	DesignParameters  []types.DesignParameter
+}
+
+func NewSimInputGenerator(designParameters []types.DesignParameter, fileName string) *SimInputGenerator {
+	return &SimInputGenerator{
+		SimInputsFileName: fileName,
+		DesignParameters:  designParameters,
+	}
+}
+
 func CalculateStep(min float64, max float64, numSims int) float64 {
 	if min == max {
 		return 0
@@ -75,7 +87,7 @@ func GenerateStudyInputs(simInputs []SimInput) StudyInput {
 }
 
 func GenerateSimInputCSV(studyInput StudyInput, fileName string) error {
-	inputFile, err := os.Create(fileName + ".csv")
+	inputFile, err := os.Create(fileName)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return err
@@ -86,19 +98,19 @@ func GenerateSimInputCSV(studyInput StudyInput, fileName string) error {
 	return nil
 }
 
-func HandleSimInputs(designParameters []types.DesignParameter, fileName string) error {
-	simInputs := GenerateSimInputs(designParameters)
+func (simInputGenerator *SimInputGenerator) HandleSimInputs() error {
+	simInputs := GenerateSimInputs(simInputGenerator.DesignParameters)
 	studyInputs := GenerateStudyInputs(simInputs)
-	err := GenerateSimInputCSV(studyInputs, fileName)
+	err := GenerateSimInputCSV(studyInputs, simInputGenerator.SimInputsFileName)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func SimInputByJobNumber(inputFileName string, jobNumber int) (SimInputIteration, error) {
+func (simInputGenerator *SimInputGenerator) SimInputByJobNumber(jobNumber int) (SimInputIteration, error) {
 	simInputIteration := SimInputIteration{}
-	file, err := os.Open(inputFileName + ".csv")
+	file, err := os.Open(simInputGenerator.SimInputsFileName)
 	if err != nil {
 		return simInputIteration, err
 	}

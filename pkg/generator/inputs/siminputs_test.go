@@ -9,6 +9,7 @@ import (
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/types"
 	"github.com/bellh14/DesignManager/pkg/utils/math"
+
 )
 
 func TestCalculateStep(t *testing.T) {
@@ -133,7 +134,7 @@ func TestGenerateStudyInputs(t *testing.T) {
 }
 
 func TestGenerateSimInputCSV(t *testing.T) {
-	testFileName := "../../../test/testoutput/testInputs"
+	testFileName := "../../../test/testoutput/testInputs.csv"
 	expectedStudyInputs := inputs.StudyInput{
 		SimInputNames: []string{"Angles", "Heaves"},
 		SimInputSamples: [][]float64{

@@ -10,6 +10,7 @@ import (
 
 	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 	"github.com/bellh14/DesignManager/pkg/types"
+
 )
 
 type DesignParameter struct {
@@ -27,9 +28,10 @@ type DesignStudyConfig struct {
 }
 
 type ConfigFile struct {
-	UseDM       bool                    `json:"useDM"` // use dm or just output generated scripts
-	OutputDir   string                  `json:"outputDir"`
-	SlurmConfig batchsystem.SlurmConfig `json:"slurmConfig"`
+	UseDM             bool                    `json:"useDM"` // use dm or just output generated scripts
+	OutputDir         string                  `json:"outputDir"`
+	SlurmConfig       batchsystem.SlurmConfig `json:"slurmConfig"`
+	DesignStudyConfig DesignStudyConfig       `json:"designStudyConfig"`
 }
 
 func ParseDesignManagerConfigFile(configFilePath string) types.ConfigFile {
