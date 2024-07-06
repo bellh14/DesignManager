@@ -22,6 +22,17 @@ func TestCalculateStep(t *testing.T) {
 	}
 }
 
+func TestCalculateStepZero(t *testing.T) {
+	min := 0.0
+	max := 0.0
+	numSims := 9
+	expected := 0.0
+	actual := inputs.CalculateStep(min, max, numSims)
+	if actual != expected {
+		t.Errorf("Expected %f, got %f", expected, actual)
+	}
+}
+
 func TestGenerateSimInputs(t *testing.T) {
 	designParameters := []types.DesignParameter{
 		{
