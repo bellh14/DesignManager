@@ -8,7 +8,6 @@ import (
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
 	"github.com/bellh14/DesignManager/pkg/simulations"
 	"github.com/bellh14/DesignManager/pkg/types"
-
 )
 
 func TestHandleSimulation(t *testing.T) {

@@ -9,7 +9,6 @@ import (
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
 	"github.com/bellh14/DesignManager/pkg/utils"
-
 )
 
 type Simulation struct {
@@ -74,8 +73,10 @@ func (simulation *Simulation) CreateSimulationInputFile() {
 		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
 		simError.SimError()
 	}
+	defer inputFile.Close()
 	utils.WriteParameterCsvHeader(simulation.InputParameters.Name, inputFile)
 	utils.WriteSimulationInputCSV(simulation.InputParameters.Value, inputFile)
+	inputFile.Close()
 }
 
 func (simulation *Simulation) CreateJobScript() {

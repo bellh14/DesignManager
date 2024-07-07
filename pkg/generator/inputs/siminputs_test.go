@@ -151,8 +151,8 @@ func TestGenerateSimInputCSV(t *testing.T) {
 	}
 
 	// remove old file
-	if _, err := os.Stat(testFileName + ".csv"); err == nil {
-		err := os.Remove(testFileName + ".csv")
+	if _, err := os.Stat(testFileName); err == nil {
+		err := os.Remove(testFileName)
 		if err != nil {
 			t.Errorf("Error: %v", err)
 		}
@@ -163,7 +163,7 @@ func TestGenerateSimInputCSV(t *testing.T) {
 		t.Errorf("Error: %v", err)
 	}
 
-	file, err := os.Open(testFileName + ".csv")
+	file, err := os.Open(testFileName)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -190,9 +190,14 @@ func TestGenerateSimInputCSV(t *testing.T) {
 			}
 		} else {
 			for j, value := range record {
-				expectedValue := strconv.FormatFloat(expectedStudyInputs.SimInputSamples[i-1][j], 'f', -1, 64)
-				if value != expectedValue {
-					t.Errorf("Expected %s, got %s", expectedValue, value)
+				// expectedValue := strconv.FormatFloat(expectedStudyInputs.SimInputSamples[i-1][j], 'f', -1, 64)
+				expectedValue := expectedStudyInputs.SimInputSamples[i-1][j]
+				floatValue, err := strconv.ParseFloat(value, 64)
+				if err != nil {
+					t.Errorf("Error parsing input file, %s", err)
+				}
+				if !math.AlmostEqual(floatValue, expectedValue) {
+					t.Errorf("Expected %f, got %f", expectedValue, floatValue)
 				}
 			}
 		}
