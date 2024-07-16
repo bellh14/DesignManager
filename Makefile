@@ -20,7 +20,6 @@ test:
 
 .PHONY: clean
 clean:
-	@rd /s /q "bin"
-	@rm -f ./bin
+	@rm -rf ./bin
 
 
