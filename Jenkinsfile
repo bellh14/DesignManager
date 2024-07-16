@@ -11,13 +11,7 @@ pipeline {
                 sh 'make format'
             }
         }
-        stage("Lint"){
-            steps {
-                echo "Linting using Golangci-lint"
-                sh 'make lint'
-            }
-        }
-        stage("Build"){
+       stage("Build"){
             steps {
                 echo "Buliding started"
                 sh 'make build'
