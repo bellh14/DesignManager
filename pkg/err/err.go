@@ -2,7 +2,6 @@ package err
 
 import (
 	"fmt"
-
 )
 
 /*

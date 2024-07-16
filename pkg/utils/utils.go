@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/bellh14/DesignManager/pkg/types"
-
 )
 
 func PrettyPrint(i interface{}) string {

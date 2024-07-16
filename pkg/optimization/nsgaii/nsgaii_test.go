@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/bellh14/DesignManager/pkg/optimization/nsgaii"
-
 )
 
 func TestFindMaxes(t *testing.T) {

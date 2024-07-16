@@ -7,7 +7,6 @@ import (
 	"reflect"
 
 	"github.com/bellh14/DesignManager/pkg/utils"
-
 )
 
 type JobSubmission struct {
@@ -37,7 +36,7 @@ func GenerateJobScript(jobScriptInputs JobSubmission, jobNumber int) {
 
 	// jobScript.WriteString("mkdir $WorkingDir/$JobNumber\n\n")
 
-	jobScript.WriteString(`$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks -time -batch-report`)
+	jobScript.WriteString(`$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks -time -batch-report -bs slurm`)
 
 	jobScript.WriteString("\n\n")
 	jobScript.WriteString("exit_code=$?\n")

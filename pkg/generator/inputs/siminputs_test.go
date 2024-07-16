@@ -9,7 +9,6 @@ import (
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/types"
 	"github.com/bellh14/DesignManager/pkg/utils/math"
-
 )
 
 func TestCalculateStep(t *testing.T) {

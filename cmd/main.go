@@ -7,7 +7,6 @@ import (
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/designmanager"
-
 )
 
 func main() {

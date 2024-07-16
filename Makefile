@@ -1,3 +1,11 @@
+.PHONY: format
+format:
+	@gofumpt -l -w .
+
+.PHONY: lint
+lint:
+	@golangci-lint run
+
 .PHONY: build
 build:
 	@go build -C cmd/ -o ../bin/DesignManager
@@ -14,3 +22,5 @@ test:
 clean:
 	@rd /s /q "bin"
 	@rm -f ./bin
+
+

@@ -10,7 +10,6 @@ import (
 
 	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 	"github.com/bellh14/DesignManager/pkg/types"
-
 )
 
 type DesignParameter struct {

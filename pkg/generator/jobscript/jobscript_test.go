@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
-
-
 )
 
 func TestGenerateJobScript(t *testing.T) {
