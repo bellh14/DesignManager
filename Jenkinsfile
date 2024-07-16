@@ -5,6 +5,12 @@ pipeline {
         pollSCM 'H/5 * * * *'
     }
     stages {
+        stage("Cleaning"){
+          steps {
+              echo "Cleaning bulid dir"
+              sh 'make clean'
+          }
+        }
         stage("Format"){
             steps {
                 echo "Formating using Gofumpt"
