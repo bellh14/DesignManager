@@ -6,7 +6,7 @@
     },
     "WorkingDir": "/scratch/ganymede/<user>/DM/",
     "StarCCM": {
-        "Path": "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
+        "StarPath": "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
         "PodKey": "<podkey>",
         "JavaMacro": "macro.java",
         "SimFile": "simfile.sim"
@@ -21,23 +21,27 @@
                 "Name": "Design Parameter 1",
                 "Min": 0.0,
                 "Max": 1.0,
-                "Step": 0.1
+                "Step": 0.1,
+                "NumSims": 8
             },
             {
                 "Name": "Design Parameter 2",
                 "Min": 0.0,
                 "Max": 1.0,
-                "Step": 0.1
+                "Step": 0.1,
+                "NumSims": 8
             }
         ],
         "DesignObjectives": [
             {
                 "Name": "Design Objective 1",
-                "Weight": 1.0
+                "Weight": 1.0,
+                "Goal": "Maximize"
             },
             {
                 "Name": "Design Objective 2",
-                "Weight": 0.75
+                "Weight": 0.75,
+                "Goal": "Minimize"
             }
         ]
     }

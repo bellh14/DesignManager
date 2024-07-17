@@ -1,8 +1,25 @@
-build:
-	@go build -o bin/DesignManager
+.PHONY: format
+format:
+	@gofumpt -l -w .
 
+.PHONY: lint
+lint:
+	@golangci-lint run
+
+.PHONY: build
+build:
+	@go build -C cmd/ -o ../bin/DesignManager
+
+.PHONY: run
 run: build
 	@./bin/DesignManager
 
+.PHONY: test
 test:
-	@go test -v ./...
+	@go test --cover -v ./...
+
+.PHONY: clean
+clean:
+	@rm -rf ./bin
+
+

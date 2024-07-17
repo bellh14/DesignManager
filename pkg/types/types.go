@@ -5,12 +5,13 @@ type SystemArgs struct {
 }
 
 type DesignParameter struct {
-	Name string
-	Min  float64
-	Max  float64
-	Step float64
-	Mean float64
-	StdDev float64
+	Name    string
+	Min     float64
+	Max     float64
+	Step    float64
+	Mean    float64
+	StdDev  float64
+	NumSims int
 }
 
 type SystemResourcesType struct {
@@ -20,10 +21,10 @@ type SystemResourcesType struct {
 }
 
 type StarCCM struct {
-	Path string
-	PodKey	string
+	StarPath  string
+	PodKey    string
 	JavaMacro string
-	SimFile string
+	SimFile   string
 }
 
 type DesignManagerInputParameters struct {
@@ -37,6 +38,7 @@ type DesignManagerInputParameters struct {
 
 type DesignObjective struct {
 	Name   string
+	Goal   string
 	Weight float64
 }
 
@@ -55,16 +57,42 @@ type ConfigFile struct {
 }
 
 type JobSubmissionType struct {
-	WorkingDir string
-	Ntasks int
-	Path string
-	PodKey	string
-	JavaMacro string
-	SimFile string
-	JobNumber int
+	WorkingDir       string
+	Ntasks           int
+	StarPath         string
+	PodKey           string
+	JavaMacro        string
+	SimFile          string
+	DesignParameters []DesignParameter
 }
 
 type ParameterSamples struct {
 	Samples []float64
 }
 
+type FailedSimulation struct {
+	JobNumber int
+	Cause     string
+}
+
+type DesignObjectiveResult struct {
+	DesignObjectiveName   string
+	DesignObjectiveResult float64
+}
+
+type SimInput struct {
+	Name  string
+	Value float64
+}
+
+type SimulationResult struct {
+	JobNumber              int
+	InputParameters        []SimInput
+	DesignObjectiveResults []float64
+}
+
+type GenerationResults struct {
+	Number        int
+	FailedSims    []FailedSimulation
+	SucceededSims []int
+}
