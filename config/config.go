@@ -12,25 +12,36 @@ import (
 	"github.com/bellh14/DesignManager/pkg/types"
 )
 
+type StarCCM struct {
+	StarPath  string `json:"StarPath"`
+	PodKey    string `json:"PodKey"`
+	JavaMacro string `json:"JavaMacro"`
+	SimFile   string `json:"SimFile"`
+}
+
 type DesignParameter struct {
-	Name  string  `json:"name"`
-	Units string  `json:"units"`
-	Min   float64 `json:"min"`
-	Max   float64 `json:"max"`
-	Step  float64 `json:"step"`
+	Name    string  `json:"Name"`
+	Units   string  `json:"Units"`
+	Min     float64 `json:"Min"`
+	Max     float64 `json:"Max"`
+	Step    float64 `json:"Step"`
+	NumSims int     `json:"NumSims"`
 }
 type DesignStudyConfig struct {
-	StudyType        string            `json:"studyType"`
-	StudyConfigDir   string            `json:"studyConfigDir"` // optional dir for storing study configs ie sim inputs
-	NumSims          int               `json:"numSims"`
-	DesignParameters []DesignParameter `json:"designParameters"`
+	StudyType        string            `json:"StudyType"`
+	StudyConfigDir   string            `json:"StudyConfigDir"` // optional dir for storing study configs ie sim inputs
+	NtasksPerSim     int               `json:"NtasksPerSim"`
+	NumSims          int               `json:"NumSims"`
+	DesignParameters []DesignParameter `json:"DesignParameters"`
 }
 
 type ConfigFile struct {
-	UseDM             bool                    `json:"useDM"` // use dm or just output generated scripts
-	OutputDir         string                  `json:"outputDir"`
-	SlurmConfig       batchsystem.SlurmConfig `json:"slurmConfig"`
-	DesignStudyConfig DesignStudyConfig       `json:"designStudyConfig"`
+	UseDM             bool                    `json:"UseDM"` // use dm or just output generated scripts
+	OutputDir         string                  `json:"OutputDir"`
+	SlurmConfig       batchsystem.SlurmConfig `json:"SlurmConfig"`
+	DesignStudyConfig DesignStudyConfig       `json:"DesignStudyConfig"`
+	StarCCM           StarCCM                 `json:"Starccm"`
+	WorkingDir        string                  `json:"WorkingDir"`
 }
 
 func ParseDesignManagerConfigFile(configFilePath string) types.ConfigFile {

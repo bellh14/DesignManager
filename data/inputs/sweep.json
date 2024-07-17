@@ -1,0 +1,44 @@
+{
+  "UseDM": true,
+  "OutputDir": "./",
+  "SlurmConfig": {
+    "JobName": "2024AeroSweep",
+    "Partition": "icx",
+    "Nodes": 1,
+    "Ntasks": 80,
+    "WallTime": "24:00:00",
+    "Email": "email",
+    "MailType": "all",
+    "OutputFile": "output.txt",
+    "ErrorFile": "error.txt",
+    "WorkingDir": "./"
+  },
+  "WorkingDir": "/scratch/ganymede/<user>/DM/",
+  "StarCCM": {
+    "StarPath": "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
+    "PodKey": "<podkey>",
+    "JavaMacro": "macro.java",
+    "SimFile": "simfile.sim"
+  },
+  "DesignStudyConfig": {
+    "StudyType": "Sweep",
+    "NumSims": 9,
+    "NtasksPerSim": 80,
+    "DesignParameters": [
+      {
+        "Name": "Chassis Angle",
+        "Units": "deg",
+        "Min": -1.3,
+        "Max": 1.3,
+        "NumSims": 9
+      },
+      {
+        "Name": "Chassis Heave",
+        "Units": "inches",
+        "Min": 0.0,
+        "Max": 0.0,
+        "NumSims": 9
+      }
+    ]
+  }
+}

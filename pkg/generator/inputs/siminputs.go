@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/bellh14/DesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/utils"
 )
 
@@ -31,10 +31,13 @@ type StudyInput struct {
 
 type SimInputGenerator struct {
 	SimInputsFileName string
-	DesignParameters  []types.DesignParameter
+	DesignParameters  []config.DesignParameter
 }
 
-func NewSimInputGenerator(designParameters []types.DesignParameter, fileName string) *SimInputGenerator {
+func NewSimInputGenerator(
+	designParameters []config.DesignParameter,
+	fileName string,
+) *SimInputGenerator {
 	return &SimInputGenerator{
 		SimInputsFileName: fileName,
 		DesignParameters:  designParameters,
@@ -48,7 +51,7 @@ func CalculateStep(min float64, max float64, numSims int) float64 {
 	return (math.Abs(min) + math.Abs(max)) / float64(numSims-1)
 }
 
-func GenerateSimInputs(designParameters []types.DesignParameter) []SimInput {
+func GenerateSimInputs(designParameters []config.DesignParameter) []SimInput {
 	var simInputs []SimInput
 	for _, dp := range designParameters {
 		simInputs = append(simInputs, SimInput{
@@ -108,7 +111,9 @@ func (simInputGenerator *SimInputGenerator) HandleSimInputs() error {
 	return nil
 }
 
-func (simInputGenerator *SimInputGenerator) SimInputByJobNumber(jobNumber int) (SimInputIteration, error) {
+func (simInputGenerator *SimInputGenerator) SimInputByJobNumber(
+	jobNumber int,
+) (SimInputIteration, error) {
 	simInputIteration := SimInputIteration{}
 	file, err := os.Open(simInputGenerator.SimInputsFileName)
 	if err != nil {
@@ -122,7 +127,7 @@ func (simInputGenerator *SimInputGenerator) SimInputByJobNumber(jobNumber int) (
 		return simInputIteration, err
 	}
 
-	if jobNumber >= len(records)-1 {
+	if jobNumber > len(records)-1 {
 		return simInputIteration, fmt.Errorf("Job number %d is out of range", jobNumber)
 	}
 
