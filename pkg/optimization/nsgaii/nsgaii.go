@@ -3,7 +3,6 @@ package nsgaii
 import (
 	"math"
 	"sort"
-
 )
 
 // implements the NSGA-II algorithm

@@ -112,7 +112,7 @@ func WriteParameterCsv(samples [][]float64, file *os.File) {
 	for _, row := range samples {
 		strRow := make([]string, len(row))
 		for i, value := range row {
-			strRow[i] = strconv.FormatFloat(value, 'f', -1, 64)
+			strRow[i] = strconv.FormatFloat(value, 'f', 4, 64)
 		}
 
 		// Write the string slice to the CSV file
@@ -128,6 +128,19 @@ func WriteParameterCsvHeader(designParameters []string, file *os.File) {
 
 	if err := writer.Write(designParameters); err != nil {
 		fmt.Println("Error: ", err)
+	}
+}
+
+func WriteSimulationInputCSV(values []float64, file *os.File) {
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	strRow := make([]string, len(values))
+	for i, value := range values {
+		strRow[i] = strconv.FormatFloat(value, 'f', 4, 64)
+	}
+	if err := writer.Write(strRow); err != nil {
+		log.Fatalf("Failed to write Input csv: %s", err)
 	}
 }
 

@@ -4,5 +4,6 @@
         "formatting.gofumpt": true,
         "ui.semanticTokens": true
     },
-    "go.lintOnSave": "package"
+    "go.lintOnSave": "package",
+    "go.lintTool": "golangci-lint"
 }

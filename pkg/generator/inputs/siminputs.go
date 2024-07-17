@@ -1,11 +1,13 @@
 package inputs
 
 import (
+	"encoding/csv"
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 
-	"github.com/bellh14/DesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/utils"
 )
 
@@ -18,8 +20,8 @@ type SimInput struct {
 }
 
 type SimInputIteration struct {
-	Name  string
-	Value float64
+	Name  []string
+	Value []float64
 }
 
 type StudyInput struct {
@@ -27,11 +29,29 @@ type StudyInput struct {
 	SimInputSamples [][]float64
 }
 
+type SimInputGenerator struct {
+	SimInputsFileName string
+	DesignParameters  []config.DesignParameter
+}
+
+func NewSimInputGenerator(
+	designParameters []config.DesignParameter,
+	fileName string,
+) *SimInputGenerator {
+	return &SimInputGenerator{
+		SimInputsFileName: fileName,
+		DesignParameters:  designParameters,
+	}
+}
+
 func CalculateStep(min float64, max float64, numSims int) float64 {
+	if min == max {
+		return 0
+	}
 	return (math.Abs(min) + math.Abs(max)) / float64(numSims-1)
 }
 
-func GenerateSimInputs(designParameters []types.DesignParameter) []SimInput {
+func GenerateSimInputs(designParameters []config.DesignParameter) []SimInput {
 	var simInputs []SimInput
 	for _, dp := range designParameters {
 		simInputs = append(simInputs, SimInput{
@@ -70,7 +90,7 @@ func GenerateStudyInputs(simInputs []SimInput) StudyInput {
 }
 
 func GenerateSimInputCSV(studyInput StudyInput, fileName string) error {
-	inputFile, err := os.Create(fileName + ".csv")
+	inputFile, err := os.Create(fileName)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return err
@@ -79,4 +99,52 @@ func GenerateSimInputCSV(studyInput StudyInput, fileName string) error {
 	utils.WriteParameterCsvHeader(studyInput.SimInputNames, inputFile)
 	utils.WriteParameterCsv(studyInput.SimInputSamples, inputFile)
 	return nil
+}
+
+func (simInputGenerator *SimInputGenerator) HandleSimInputs() error {
+	simInputs := GenerateSimInputs(simInputGenerator.DesignParameters)
+	studyInputs := GenerateStudyInputs(simInputs)
+	err := GenerateSimInputCSV(studyInputs, simInputGenerator.SimInputsFileName)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (simInputGenerator *SimInputGenerator) SimInputByJobNumber(
+	jobNumber int,
+) (SimInputIteration, error) {
+	simInputIteration := SimInputIteration{}
+	file, err := os.Open(simInputGenerator.SimInputsFileName)
+	if err != nil {
+		return simInputIteration, err
+	}
+	defer file.Close()
+
+	csvReader := csv.NewReader(file)
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		return simInputIteration, err
+	}
+
+	if jobNumber > len(records)-1 {
+		return simInputIteration, fmt.Errorf("Job number %d is out of range", jobNumber)
+	}
+
+	for i, record := range records {
+		if i == 0 {
+			simInputIteration.Name = append(simInputIteration.Name, record...)
+		} else {
+			if i == jobNumber {
+				for _, value := range record {
+					parsedValue, err := strconv.ParseFloat(value, 64)
+					if err != nil {
+						return simInputIteration, err
+					}
+					simInputIteration.Value = append(simInputIteration.Value, parsedValue)
+				}
+			}
+		}
+	}
+	return simInputIteration, nil
 }

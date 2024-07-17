@@ -6,51 +6,61 @@ import (
 	"os/exec"
 
 	e "github.com/bellh14/DesignManager/pkg/err"
+	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
-	"github.com/bellh14/DesignManager/pkg/types"
 	"github.com/bellh14/DesignManager/pkg/utils"
-	"github.com/bellh14/DesignManager/pkg/utils/math/sampling"
 )
 
 type Simulation struct {
 	JobNumber              int
-	JobSubmissionType      types.JobSubmissionType
-	InputParameters        []types.SimInput
+	JobSubmission          jobscript.JobSubmission
+	InputParameters        inputs.SimInputIteration
+	JobDir                 string
 	DesignObjectiveResults []float64
 }
 
-func NewSimulation(jobSubmission *types.JobSubmissionType, simID int) *Simulation {
+func NewSimulation(
+	jobSubmission *jobscript.JobSubmission,
+	simID int,
+	inputParameters inputs.SimInputIteration,
+) *Simulation {
 	return &Simulation{
-		JobNumber:         simID,
-		JobSubmissionType: *jobSubmission,
+		JobNumber:       simID,
+		JobSubmission:   *jobSubmission,
+		InputParameters: inputParameters,
 	}
 }
 
-func (simulation *Simulation) SetWorkingDir(workingDir string) {
-	simulation.JobSubmissionType.WorkingDir = workingDir + fmt.Sprint(simulation.JobNumber)
+func (simulation *Simulation) SetWorkingDir() {
+	fmt.Println("Setting Working Directory for sim")
+	simulation.JobDir = simulation.JobSubmission.WorkingDir + "/" + fmt.Sprint(simulation.JobNumber)
 }
 
 func (simulation *Simulation) Run() {
-	simulation.SetWorkingDir(simulation.JobSubmissionType.WorkingDir)
+	fmt.Printf("\nRunning Simulation %d\n", simulation.JobNumber)
+	simulation.SetWorkingDir()
 	simulation.CreateSimulationDirectory()
 	simulation.CopySimulationFiles()
-	simulation.InputParameters = simulation.SampleDesignParameters()
-	fmt.Print(simulation.InputParameters)
+	fmt.Println(simulation.InputParameters)
 	simulation.CreateSimulationInputFile()
 	simulation.CreateJobScript()
 	simulation.RunSimulation()
+	fmt.Printf("Finished running simulation %d\n\n", simulation.JobNumber)
 	// simulation.DesignObjectiveResults = simulation.RunSimulation()
 }
 
-func (simulation *Simulation) SampleDesignParameters() []types.SimInput {
-	sampler := sampling.NewSampler(simulation.JobSubmissionType)
-	samples := sampler.Sample()
-	return samples
-}
+// func (simulation *Simulation) SampleDesignParameters() []types.SimInput {
+// 	sampler := sampling.NewSampler(simulation.JobSubmission)
+// 	samples := sampler.Sample()
+// 	return samples
+// }
+
+func (simulation *Simulation) SimulationInputs() {}
 
 func (simulation *Simulation) CreateSimulationDirectory() {
 	// create directory
-	err := os.MkdirAll(simulation.JobSubmissionType.WorkingDir, 0o777)
+	fmt.Println("Creating Simulation Directory")
+	err := os.MkdirAll(simulation.JobDir, 0o777)
 	if err != nil {
 		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
 		simError.SimError()
@@ -59,33 +69,45 @@ func (simulation *Simulation) CreateSimulationDirectory() {
 
 func (simulation *Simulation) CopySimulationFiles() {
 	// copy files
-	fmt.Printf("Copying files to %s\n", simulation.JobSubmissionType.WorkingDir)
-	utils.CopyFile(simulation.JobSubmissionType.SimFile, simulation.JobSubmissionType.WorkingDir+simulation.JobSubmissionType.SimFile)
-	utils.CopyFile(simulation.JobSubmissionType.JavaMacro, simulation.JobSubmissionType.WorkingDir+simulation.JobSubmissionType.JavaMacro)
+	fmt.Printf("Copying files to %s\n", simulation.JobDir)
+	utils.CopyFile(
+		simulation.JobSubmission.WorkingDir+"/"+simulation.JobSubmission.SimFile,
+		simulation.JobDir+"/"+simulation.JobSubmission.SimFile,
+	)
+	utils.CopyFile(
+		simulation.JobSubmission.WorkingDir+"/"+simulation.JobSubmission.JavaMacro,
+		simulation.JobDir+"/"+simulation.JobSubmission.JavaMacro,
+	)
 }
 
 func (simulation *Simulation) CreateSimulationInputFile() {
 	// create input file
-	// inputFile, err := os.Create(simulation.JobSubmissionType.WorkingDir + "/input.csv")
-	// if err != nil {
-	// 	simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
-	// 	simError.SimError()
-	// }
-	// utils.WriteParameterCsvHeader(simulation.InputParameters, inputFile)
-	// utils.WriteParameterCsv(simulation.InputParameters, inputFile)
+	fmt.Println("Creating Input CSV")
+	inputFile, err := os.Create(simulation.JobDir + "/InputParams.csv")
+	if err != nil {
+		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
+		simError.SimError()
+	}
+	defer inputFile.Close()
+	utils.WriteParameterCsvHeader(simulation.InputParameters.Name, inputFile)
+	utils.WriteSimulationInputCSV(simulation.InputParameters.Value, inputFile)
+	inputFile.Close()
 }
 
 func (simulation *Simulation) CreateJobScript() {
-	jobscript.GenerateJobScript(simulation.JobSubmissionType, simulation.JobNumber)
+	fmt.Println("Creating Job Script")
+	jobscript.GenerateJobScript(simulation.JobSubmission, simulation.JobNumber)
 }
 
 func (simulation *Simulation) RunSimulation() {
 	// exec job script
-	cmd := exec.Command(simulation.JobSubmissionType.WorkingDir + "/job_" + fmt.Sprint(simulation.JobNumber) + ".sh")
+	fmt.Println("Starting StarCCM+")
+	cmd := exec.Command(simulation.JobDir + "/sim_" + fmt.Sprint(simulation.JobNumber) + ".sh")
 	_, err := cmd.CombinedOutput()
 	if err != nil {
 		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
 		simError.SimError()
+		fmt.Printf(simError.SimError() + "\n")
 	}
 }
 

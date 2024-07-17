@@ -8,16 +8,16 @@ import (
 )
 
 type SlurmConfig struct {
-	JobName    string `json:"jobName"`
-	Partition  string `json:"partition"`
-	Nodes      int    `json:"nodes"`
-	Ntasks     int    `json:"ntasks"`
-	WallTime   string `json:"wallTime"` // "hh:mm:ss"
-	Email      string `json:"email"`
-	MailType   string `json:"mailType"` // "begin", "end", "fail", "all"
-	OutputFile string `json:"outputFile"`
-	ErrorFile  string `json:"errorFile"`
-	WorkingDir string `json:"workingDir"`
+	JobName    string `json:"JobName"`
+	Partition  string `json:"Partition"`
+	Nodes      int    `json:"Nodes"`
+	Ntasks     int    `json:"Ntasks"`
+	WallTime   string `json:"WallTime"` // "hh:mm:ss"
+	Email      string `json:"Email"`
+	MailType   string `json:"MailType"` // "begin", "end", "fail", "all"
+	OutputFile string `json:"OutputFile"`
+	ErrorFile  string `json:"ErrorFile"`
+	WorkingDir string `json:"WorkingDir"`
 }
 
 func WriteSlurmVariable(file *os.File, name string, value any) {
@@ -59,7 +59,9 @@ func WriteStructOfSlurmVariables(values reflect.Value, file *os.File) {
 func GenerateSlurmScript(slurmConfig SlurmConfig) {
 	// TODO: make this less painful to read
 
-	slurmScript, err := os.Create(fmt.Sprintf("%s%s.sh", slurmConfig.WorkingDir, slurmConfig.JobName))
+	slurmScript, err := os.Create(
+		fmt.Sprintf("%s%s.sh", slurmConfig.WorkingDir, slurmConfig.JobName),
+	)
 	if err != nil {
 		// TODO: handle error
 		fmt.Println(err)

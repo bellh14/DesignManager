@@ -4,30 +4,24 @@
 name: Go
 
 on:
-    push:
-        branches: ["main", "dev"]
-    pull_request:
-        branches: ["main", "dev"]
+  push:
+    branches: ["main", "dev"]
+  pull_request:
+    branches: ["main", "dev"]
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-            - name: Set up Go
-              uses: actions/setup-go@v4
-              with:
-                  go-version: "1.22.x"
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.22.x"
 
-            - name: Build
-              run: go build -v ./...
+      - name: Build
+        run: go build -v ./...
 
-            - name: Test
-              run: go test -v ./...
-
-            - name: Format
-              run: gofumpt -l -w .
-
-            - name: Lint
-              run: golangci-lint run
+      - name: Test
+        run: go test -v ./...

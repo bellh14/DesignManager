@@ -4,7 +4,6 @@ import (
 	"github.com/bellh14/DesignManager/pkg/types"
 	"github.com/bellh14/DesignManager/pkg/utils"
 	"github.com/bellh14/DesignManager/pkg/utils/math/probability"
-
 )
 
 type Sampler struct {

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
-
 )
 
 func TestGenerateSlurmScript(t *testing.T) {
