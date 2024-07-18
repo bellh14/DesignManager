@@ -7,15 +7,18 @@ import (
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/designmanager"
+	"github.com/bellh14/DesignManager/pkg/utils/log"
 )
 
 func main() {
-	// Parse command line arguments
+	// creat logger
+	logger := log.NewLogger(0) // Parse command line arguments
+
 	inputFile := flag.String("config", "", "Input file")
 	flag.Parse()
 
 	if *inputFile == "" {
-		fmt.Println("Error: Input file not specified")
+		logger.Fatal("Input file not specified", fmt.Errorf("no config.json file"))
 		os.Exit(1)
 	}
 
@@ -24,6 +27,6 @@ func main() {
 	fmt.Println("Input config file is: ", *inputFile)
 
 	// Create design manager
-	designManager := designmanager.NewDesignManager(config)
+	designManager := designmanager.NewDesignManager(config, logger)
 	designManager.Run()
 }

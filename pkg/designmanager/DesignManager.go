@@ -8,15 +8,18 @@ import (
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
 	"github.com/bellh14/DesignManager/pkg/simulations"
+	"github.com/bellh14/DesignManager/pkg/utils/log"
 )
 
 type DesignManager struct {
 	ConfigFile config.ConfigFile
+	Logger     *log.Logger
 }
 
-func NewDesignManager(config config.ConfigFile) *DesignManager {
+func NewDesignManager(config config.ConfigFile, logger *log.Logger) *DesignManager {
 	return &DesignManager{
 		ConfigFile: config,
+		Logger:     logger,
 	}
 }
 
@@ -39,11 +42,13 @@ func (dm *DesignManager) HandleSweep() {
 		inputs, err := inputGenerator.SimInputByJobNumber(i)
 		if err != nil {
 			fmt.Printf("Error obtaining siminput by job number %s", err)
+			dm.Logger.Error(fmt.Sprintf("Error Obtaining siminput for job number %d", i), err)
 		}
-		sim := simulations.NewSimulation(&jobSubmission, i, inputs)
+		simLogger := log.NewLogger(0)
+		sim := simulations.NewSimulation(&jobSubmission, i, inputs, simLogger)
 		sim.Run()
 	}
-	fmt.Println("Finished running design sweep")
+	dm.Logger.Log("Finished running design sweep")
 }
 
 func (dm *DesignManager) HandleDesignStudy(studyType string) {
@@ -52,7 +57,7 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 		// dm.HandlePareto()
 		fmt.Println("TODO: Implement Pareto")
 	case "Sweep":
-		fmt.Println("Running Design Sweep")
+		dm.Logger.Log("Running design sweep")
 		dm.HandleSweep()
 	default:
 		fmt.Println("Error: Study type not supported")
