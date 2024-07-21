@@ -44,7 +44,7 @@ func (dm *DesignManager) HandleSweep() {
 			fmt.Printf("Error obtaining siminput by job number %s", err)
 			dm.Logger.Error(fmt.Sprintf("Error Obtaining siminput for job number %d", i), err)
 		}
-		simLogger := log.NewLogger(0)
+		simLogger := log.NewLogger(0, fmt.Sprintf("Simulation: %d", i), "63")
 		sim := simulations.NewSimulation(&jobSubmission, i, inputs, simLogger)
 		sim.Run()
 	}

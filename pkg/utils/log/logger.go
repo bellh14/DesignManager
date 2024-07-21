@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 )
 
@@ -24,21 +25,26 @@ func CreateLogFile(fileName string) (*os.File, error) {
 	return logFile, nil
 }
 
-func NewLogger(level log.Level) *Logger {
+func NewLogger(level log.Level, prefix, prefixColor string) *Logger {
 	// logFile, err := CreateLogFile("log.txt")
 	// if err != nil {
 	// 	panic(err)
 	// }
 	// multiWriter := io.MultiWriter(os.Stdout, logFile)
 
+	styles := log.DefaultStyles()
+	styles.Prefix = lipgloss.NewStyle().
+		Foreground(lipgloss.Color(prefixColor)).
+		Bold(true)
+
 	handler := log.NewWithOptions(os.Stdout, log.Options{
+		Prefix:          prefix,
 		ReportTimestamp: true,
-		TimeFunction:    log.NowUTC,
 		TimeFormat:      time.TimeOnly,
 		Level:           level,
 		Formatter:       log.TextFormatter,
 	})
-	handler.SetStyles(log.DefaultStyles())
+	handler.SetStyles(styles)
 
 	slogLogger := slog.New(handler)
 
@@ -67,4 +73,8 @@ func (logger *Logger) Error(message string, err error) {
 
 func (logger *Logger) Fatal(message string, err error) {
 	logger.Logger.Fatal(message, "Error", err)
+}
+
+func (logger *Logger) Debug(message string) {
+	logger.Logger.Debug(message)
 }

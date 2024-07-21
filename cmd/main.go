@@ -12,7 +12,7 @@ import (
 
 func main() {
 	// creat logger
-	logger := log.NewLogger(0) // Parse command line arguments
+	logger := log.NewLogger(0, "DM", "#941ff4") // Parse command line arguments
 
 	inputFile := flag.String("config", "", "Input file")
 	flag.Parse()
@@ -24,7 +24,7 @@ func main() {
 
 	// Parse config file
 	config := config.ParseConfigFile(*inputFile)
-	fmt.Println("Input config file is: ", *inputFile)
+	logger.Log(fmt.Sprintf("Input config file is: %s", *inputFile))
 
 	// Create design manager
 	designManager := designmanager.NewDesignManager(config, logger)

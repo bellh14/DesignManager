@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
-	"github.com/bellh14/DesignManager/pkg/types"
 	"github.com/bellh14/DesignManager/pkg/utils/math"
 )
 
@@ -34,7 +34,7 @@ func TestCalculateStepZero(t *testing.T) {
 }
 
 func TestGenerateSimInputs(t *testing.T) {
-	designParameters := []types.DesignParameter{
+	designParameters := []config.DesignParameter{
 		{
 			Name:    "Parameter1",
 			Min:     -1.3,
@@ -122,11 +122,19 @@ func TestGenerateStudyInputs(t *testing.T) {
 	}
 	for i := range expected.SimInputSamples {
 		if len(actual.SimInputSamples[i]) != len(expected.SimInputSamples[i]) {
-			t.Errorf("Expected %d, got %d", len(expected.SimInputSamples[i]), len(actual.SimInputSamples[i]))
+			t.Errorf(
+				"Expected %d, got %d",
+				len(expected.SimInputSamples[i]),
+				len(actual.SimInputSamples[i]),
+			)
 		}
 		for j := range expected.SimInputSamples[i] {
 			if !math.AlmostEqual(actual.SimInputSamples[i][j], expected.SimInputSamples[i][j]) {
-				t.Errorf("Expected %f, got %f\noutside of tolerance: 1e-3", expected.SimInputSamples[i][j], actual.SimInputSamples[i][j])
+				t.Errorf(
+					"Expected %f, got %f\noutside of tolerance: 1e-3",
+					expected.SimInputSamples[i][j],
+					actual.SimInputSamples[i][j],
+				)
 			}
 		}
 	}
