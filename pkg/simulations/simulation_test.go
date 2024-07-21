@@ -4,10 +4,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
 	"github.com/bellh14/DesignManager/pkg/simulations"
-	"github.com/bellh14/DesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/pkg/utils/log"
 )
 
 func TestHandleSimulation(t *testing.T) {
@@ -40,7 +41,7 @@ func testCreateNewSimulation(t *testing.T) *simulations.Simulation {
 		SimFile:    "testsim.sim",
 	}
 
-	designParameters := []types.DesignParameter{
+	designParameters := []config.DesignParameter{
 		{
 			Name:    "Parameter1",
 			Min:     -1.3,
@@ -61,7 +62,8 @@ func testCreateNewSimulation(t *testing.T) *simulations.Simulation {
 	if err != nil {
 		t.Errorf("Error obtaining siminput by job number %s", err)
 	}
-	return simulations.NewSimulation(&jobSubmission, 1, inputs)
+	logger := log.NewLogger(0, "Simulation Test", "63")
+	return simulations.NewSimulation(&jobSubmission, 1, inputs, logger)
 }
 
 func testSetWorkingDir(t *testing.T, sim *simulations.Simulation) {

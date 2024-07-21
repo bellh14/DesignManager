@@ -1,54 +1,80 @@
 package log
 
 import (
-	"fmt"
-	"log"
+	"log/slog"
 	"os"
+	"time"
 
-	"github.com/bellh14/DesignManager/pkg/err"
-	"github.com/bellh14/DesignManager/pkg/types"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 type Logger struct {
-	*log.Logger
+	Level      log.Level
+	SlogLogger slog.Logger
+	Logger     log.Logger
 }
 
-func Setup(logFile string) {
-	// Create log file
-	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
+func CreateLogFile(fileName string) (*os.File, error) {
+	logFile, err := os.Create(fileName)
 	if err != nil {
-		log.Fatalf("Error opening log file: %v", err)
+		return nil, err
 	}
+	defer logFile.Close()
 
-	log.SetOutput(file)
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	return logFile, nil
 }
 
-func (logger *Logger) Info(message string) {
-	logger.Output(2, message)
+func NewLogger(level log.Level, prefix, prefixColor string) *Logger {
+	// logFile, err := CreateLogFile("log.txt")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// multiWriter := io.MultiWriter(os.Stdout, logFile)
+
+	styles := log.DefaultStyles()
+	styles.Prefix = lipgloss.NewStyle().
+		Foreground(lipgloss.Color(prefixColor)).
+		Bold(true)
+
+	handler := log.NewWithOptions(os.Stdout, log.Options{
+		Prefix:          prefix,
+		ReportTimestamp: true,
+		TimeFormat:      time.TimeOnly,
+		Level:           level,
+		Formatter:       log.TextFormatter,
+	})
+	handler.SetStyles(styles)
+
+	slogLogger := slog.New(handler)
+
+	return &Logger{
+		Level:      level,
+		SlogLogger: *slogLogger,
+		Logger:     *handler,
+	}
 }
 
-func (logger *Logger) Error(message string) {
-	logger.Output(2, message)
+func (logger *Logger) Log(message string) {
+	logger.Logger.Print(message)
 }
 
-func (logger *Logger) SimError(jobNumber int, e error) {
-	simError := &err.SimulationError{
-		JobNumber: jobNumber,
-		Err:       e,
-	}
-	logger.Output(2, simError.SimError())
+func (logger *Logger) LogInfo(message string) {
+	logger.Logger.Info(message)
 }
 
-func (logger *Logger) GenerationResults(generationResults types.GenerationResults) {
-	logger.Output(2, fmt.Sprintf("Generation Results: %v", generationResults))
-	if len(generationResults.FailedSims) > 0 {
-		for _, sim := range generationResults.FailedSims {
-			logger.Output(2, fmt.Sprintf("Simulation: %v failed from %s", sim.JobNumber, sim.Cause))
-		}
-	}
+func (logger *Logger) LogSimulation(logValue slog.Value, message string) {
+	logger.Logger.Print(message, "Sim", logValue)
+}
 
-	for sim := range generationResults.SucceededSims {
-		logger.Output(2, fmt.Sprintf("Succedded Simulation: %v", sim))
-	}
+func (logger *Logger) Error(message string, err error) {
+	logger.Logger.Error(message, "Error", err)
+}
+
+func (logger *Logger) Fatal(message string, err error) {
+	logger.Logger.Fatal(message, "Error", err)
+}
+
+func (logger *Logger) Debug(message string) {
+	logger.Logger.Debug(message)
 }

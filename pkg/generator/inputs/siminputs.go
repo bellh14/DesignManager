@@ -128,7 +128,7 @@ func (simInputGenerator *SimInputGenerator) SimInputByJobNumber(
 	}
 
 	if jobNumber > len(records)-1 {
-		return simInputIteration, fmt.Errorf("Job number %d is out of range", jobNumber)
+		return simInputIteration, fmt.Errorf("job number %d is out of range", jobNumber)
 	}
 
 	for i, record := range records {
