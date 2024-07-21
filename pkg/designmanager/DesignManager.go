@@ -24,6 +24,10 @@ func NewDesignManager(config config.ConfigFile, logger *log.Logger) *DesignManag
 }
 
 func (dm *DesignManager) Run() {
+	if !dm.ConfigFile.UseDM {
+		dm.Logger.Log("Use DM set to false. Exiting")
+		return
+	}
 	dm.HandleDesignStudy(dm.ConfigFile.DesignStudyConfig.StudyType)
 }
 

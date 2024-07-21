@@ -24,23 +24,23 @@ func WriteSlurmVariable(file *os.File, name string, value any) {
 	switch name {
 
 	case "JobName":
-		file.WriteString(fmt.Sprintf("#SBATCH 	-J \"%s\"\n", value))
+		fmt.Fprintf(file, "#SBATCH\t\t-J \"%s\"\n", value)
 	case "Partition":
-		file.WriteString(fmt.Sprintf("#SBATCH 	-p %s\n", value))
+		fmt.Fprintf(file, "#SBATCH\t\t-p %s\n", value)
 	case "Nodes":
-		file.WriteString(fmt.Sprintf("#SBATCH 	-N %d\n", value))
+		fmt.Fprintf(file, "#SBATCH\t\t-N %d\n", value)
 	case "Ntasks":
-		file.WriteString(fmt.Sprintf("#SBATCH 	-n %d\n", value))
+		fmt.Fprintf(file, "#SBATCH\t\t-n %d\n", value)
 	case "WallTime":
-		file.WriteString(fmt.Sprintf("#SBATCH 	-t %s\n", value))
+		fmt.Fprintf(file, "#SBATCH\t\t-t %s\n", value)
 	case "Email":
-		file.WriteString(fmt.Sprintf("#SBATCH 	-mail-user=%s\n", value))
+		fmt.Fprintf(file, "#SBATCH\t\t-mail-user=%s\n", value)
 	case "MailType":
-		file.WriteString(fmt.Sprintf("#SBATCH 	-mail-type=%s\n", value))
+		fmt.Fprintf(file, "#SBATCH\t\t-mail-type=%s\n", value)
 	case "OutputFile":
-		file.WriteString(fmt.Sprintf("#SBATCH 	-o \"%s\"\n", value))
+		fmt.Fprintf(file, "#SBATCH\t\t-o \"%s\"\n", value)
 	case "ErrorFile":
-		file.WriteString(fmt.Sprintf("#SBATCH 	-e \"%s\"\n", value))
+		fmt.Fprintf(file, "#SBATCH\t\t-e \"%s\"\n\n", value)
 	case "WorkingDir":
 		return
 	default:
@@ -56,7 +56,7 @@ func WriteStructOfSlurmVariables(values reflect.Value, file *os.File) {
 	}
 }
 
-func GenerateSlurmScript(slurmConfig SlurmConfig) {
+func GenerateSlurmScript(slurmConfig SlurmConfig, configFile string) {
 	// TODO: make this less painful to read
 
 	slurmScript, err := os.Create(
@@ -73,6 +73,8 @@ func GenerateSlurmScript(slurmConfig SlurmConfig) {
 	slurmConfigValues := reflect.ValueOf(slurmConfig)
 
 	WriteStructOfSlurmVariables(slurmConfigValues, slurmScript)
+
+	fmt.Fprintf(slurmScript, "./DesignManager -config %s", configFile)
 
 	err = os.Chmod(fmt.Sprintf("%s%s.sh", slurmConfig.WorkingDir, slurmConfig.JobName), 0o777)
 	if err != nil {
