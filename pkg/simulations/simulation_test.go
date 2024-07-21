@@ -46,17 +46,21 @@ func testCreateNewSimulation(t *testing.T) *simulations.Simulation {
 			Name:    "Parameter1",
 			Min:     -1.3,
 			Max:     1.3,
-			NumSims: 9,
+			NumSims: 3,
 		},
 		{
 			Name:    "Parameter2",
 			Min:     -1.3,
 			Max:     1.3,
-			NumSims: 9,
+			NumSims: 3,
 		},
 	}
 	inputFileName := jobSubmission.WorkingDir + "/" + "testInputs.csv"
-	inputGenerator := inputs.NewSimInputGenerator(designParameters, inputFileName)
+	inputGenerator := inputs.NewSimInputGenerator(
+		designParameters,
+		inputFileName,
+		designParameters[0].NumSims,
+	)
 	inputGenerator.HandleSimInputs()
 	inputs, err := inputGenerator.SimInputByJobNumber(1)
 	if err != nil {

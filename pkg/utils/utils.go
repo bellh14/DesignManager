@@ -22,7 +22,7 @@ func PrettyPrint(i interface{}) string {
 }
 
 func WriteBashVariable(file *os.File, name string, value any) {
-	_, err := file.WriteString(fmt.Sprintf("%s=%v\n", name, value))
+	_, err := fmt.Fprintf(file, "%s=%v\n", name, value)
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
@@ -144,7 +144,11 @@ func WriteSimulationInputCSV(values []float64, file *os.File) {
 	}
 }
 
-func CreateJobSubmission(systemResources types.SystemResourcesType, workingDir string, starCCM types.StarCCM) types.JobSubmissionType {
+func CreateJobSubmission(
+	systemResources types.SystemResourcesType,
+	workingDir string,
+	starCCM types.StarCCM,
+) types.JobSubmissionType {
 	return types.JobSubmissionType{
 		WorkingDir: workingDir,
 		Ntasks:     systemResources.Ntasks,

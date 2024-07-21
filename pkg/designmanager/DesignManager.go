@@ -39,6 +39,7 @@ func (dm *DesignManager) HandleSweep() {
 	inputGenerator := inputs.NewSimInputGenerator(
 		dm.ConfigFile.DesignStudyConfig.DesignParameters,
 		inputFileName,
+		dm.ConfigFile.DesignStudyConfig.NumSims,
 	)
 	inputGenerator.HandleSimInputs()
 

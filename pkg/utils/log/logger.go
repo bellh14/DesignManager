@@ -9,6 +9,19 @@ import (
 	"github.com/charmbracelet/log"
 )
 
+const (
+	// DebugLevel is the debug level.
+	DebugLevel log.Level = -4
+	// InfoLevel is the info level.
+	InfoLevel log.Level = 0
+	// WarnLevel is the warn level.
+	WarnLevel log.Level = 4
+	// ErrorLevel is the error level.
+	ErrorLevel log.Level = 8
+	// FatalLevel is the fatal level.
+	FatalLevel log.Level = 12
+)
+
 type Logger struct {
 	Level      log.Level
 	SlogLogger slog.Logger
