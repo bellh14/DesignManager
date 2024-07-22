@@ -39,7 +39,7 @@ func LogSimParameters(inputParameters inputs.SimInputIteration) string {
 func (sim *Simulation) LogValue() slog.Value {
 	parameters := LogSimParameters(sim.InputParameters)
 	return slog.GroupValue(
-		slog.String("Job Nummber", fmt.Sprint(sim.JobNumber)),
+		slog.String("JobNum:", fmt.Sprint(sim.JobNumber)),
 		slog.String("Inputs", parameters),
 	)
 }
