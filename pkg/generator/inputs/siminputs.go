@@ -52,7 +52,15 @@ func CalculateStep(min float64, max float64, numSims int) float64 {
 	if min == max {
 		return 0
 	}
-	return (math.Abs(min) + math.Abs(max)) / float64(numSims-1)
+	var step float64
+	if min > 0 && numSims <= 2 {
+		step = (max - min)
+	} else if min > 0 && numSims > 2 {
+		step = (max - min) / float64(numSims-1)
+	} else {
+		step = (math.Abs(min) + math.Abs(max)) / float64(numSims-1)
+	}
+	return step
 }
 
 func GenerateSimInputs(designParameters []config.DesignParameter) []SimInput {

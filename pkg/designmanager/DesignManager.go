@@ -42,14 +42,16 @@ func (dm *DesignManager) Run() {
 }
 
 func (dm *DesignManager) HandleAeroMap() {
-	// buffered channel 2nd param is for number of sweeps to run in parallel
 	numberOfSweeps := dm.ConfigFile.DesignStudyConfig.DesignParameters[0].NumSims
+	offset := dm.ConfigFile.DesignStudyConfig.DesignParameters[1].NumSims
+
+	// buffered channel 2nd param is for number of sweeps to run in parallel
 	jobs := make(chan int, numberOfSweeps)
 
 	// start sweeps
 	for i := 0; i < numberOfSweeps; i++ {
 		newDM := dm
-		inputOffset := i * numberOfSweeps
+		inputOffset := i * offset
 		go newDM.HandleSweep(inputOffset, jobs)
 		// should really lock these...
 		// in practice the sweeps will never end close enough to cause an issue
