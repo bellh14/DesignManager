@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -12,8 +13,6 @@ import (
 	"reflect"
 	"strconv"
 	"time"
-
-	"github.com/bellh14/DesignManager/pkg/types"
 )
 
 func PrettyPrint(i interface{}) string {
@@ -144,17 +143,14 @@ func WriteSimulationInputCSV(values []float64, file *os.File) {
 	}
 }
 
-func CreateJobSubmission(
-	systemResources types.SystemResourcesType,
-	workingDir string,
-	starCCM types.StarCCM,
-) types.JobSubmissionType {
-	return types.JobSubmissionType{
-		WorkingDir: workingDir,
-		Ntasks:     systemResources.Ntasks,
-		StarPath:   starCCM.StarPath,
-		PodKey:     starCCM.PodKey,
-		JavaMacro:  starCCM.JavaMacro,
-		SimFile:    starCCM.SimFile,
+func ConvertStringSliceToFloat(strValues []string) ([]float64, error) {
+	floatValues := make([]float64, len(strValues))
+	for i, value := range strValues {
+		err := errors.New("parsefloat")
+		floatValues[i], err = strconv.ParseFloat(value, 64)
+		if err != nil {
+			return nil, err
+		}
 	}
+	return floatValues, nil
 }

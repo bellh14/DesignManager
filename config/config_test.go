@@ -76,7 +76,10 @@ func compareAll(t *testing.T, got, want config.ConfigFile) {
 
 func TestParseDesignManagerConfigFile(t *testing.T) {
 	configFilePath := "../data/inputs/aeromap.json"
-	configFile := config.ParseConfigFile(configFilePath)
+	configFile, err := config.ParseConfigFile(configFilePath)
+	if err != nil {
+		t.Errorf("Failed to parse config file")
+	}
 
 	expectedSlurmInputs := batchsystem.SlurmConfig{
 		WorkingDir: ".",
@@ -154,5 +157,5 @@ func TestParseDesignManagerConfigFile(t *testing.T) {
 		DesignStudyConfig: expectedDesignStudyConfig,
 	}
 
-	compareAll(t, configFile, expectedConfigFile)
+	compareAll(t, *configFile, expectedConfigFile)
 }

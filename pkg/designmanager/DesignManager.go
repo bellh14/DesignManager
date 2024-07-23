@@ -1,26 +1,33 @@
 package designmanager
 
 import (
+	"encoding/csv"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
 	"github.com/bellh14/DesignManager/pkg/simulations"
+	"github.com/bellh14/DesignManager/pkg/utils"
 	"github.com/bellh14/DesignManager/pkg/utils/log"
 )
 
 type DesignManager struct {
-	ConfigFile     config.ConfigFile
-	Logger         *log.Logger
-	InputGenerator inputs.SimInputGenerator
+	ConfigFile      config.ConfigFile
+	Logger          *log.Logger
+	InputGenerator  inputs.SimInputGenerator
+	SimResultParams []string
+	SimResults      [][]float64
 }
 
 func NewDesignManager(config config.ConfigFile, logger *log.Logger) *DesignManager {
 	return &DesignManager{
-		ConfigFile: config,
-		Logger:     logger,
+		ConfigFile:      config,
+		Logger:          logger,
+		SimResultParams: make([]string, config.DesignStudyConfig.NumSims),
+		SimResults:      make([][]float64, config.DesignStudyConfig.NumSims),
 	}
 }
 
@@ -31,6 +38,7 @@ func (dm *DesignManager) Run() {
 	}
 	dm.HandleInputs()
 	dm.HandleDesignStudy(dm.ConfigFile.DesignStudyConfig.StudyType)
+	dm.SaveCompiledResults()
 }
 
 func (dm *DesignManager) HandleAeroMap() {
@@ -43,6 +51,10 @@ func (dm *DesignManager) HandleAeroMap() {
 		newDM := dm
 		inputOffset := i * numberOfSweeps
 		go newDM.HandleSweep(inputOffset, jobs)
+		// should really lock these...
+		// in practice the sweeps will never end close enough to cause an issue
+		dm.SimResultParams = newDM.SimResultParams
+		dm.SimResults = append(dm.SimResults, newDM.SimResults...)
 	}
 
 	// drain the channel
@@ -83,6 +95,9 @@ func (dm *DesignManager) HandleSweep(offset int, c chan int) {
 		simLogger := log.NewLogger(0, fmt.Sprintf("Simulation: %d", simNum), "63")
 		sim := simulations.NewSimulation(&jobSubmission, simNum, inputs, simLogger)
 		sim.Run()
+		simParams, simResults := sim.ParseSimulationResults()
+		dm.SimResultParams = simParams
+		dm.SimResults = append(dm.SimResults, simResults)
 	}
 	dm.Logger.Log("Finished running design sweep")
 	c <- 1 // signals sweep is finished
@@ -103,5 +118,26 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 	default:
 		fmt.Println("Error: Study type not supported")
 		os.Exit(1)
+	}
+}
+
+func (dm *DesignManager) SaveCompiledResults() {
+	resultsFile, err := os.Create("Compiled_" + dm.ConfigFile.StarCCM.SimFile + "_Report.csv")
+	if err != nil {
+		dm.Logger.Error("Failed to create results file", err)
+	}
+	utils.WriteParameterCsvHeader(dm.SimResultParams, resultsFile)
+
+	csvWriter := csv.NewWriter(resultsFile)
+	defer csvWriter.Flush()
+	for _, row := range dm.SimResults {
+
+		strRow := make([]string, len(row))
+		for j, value := range row {
+			strRow[j] = strconv.FormatFloat(value, 'f', 4, 64)
+		}
+		if err := csvWriter.Write(strRow); err != nil {
+			dm.Logger.Error("Failed to write result csv row", err)
+		}
 	}
 }

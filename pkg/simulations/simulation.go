@@ -1,10 +1,12 @@
 package simulations
 
 import (
+	"encoding/csv"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	e "github.com/bellh14/DesignManager/pkg/err"
@@ -146,8 +148,45 @@ func (simulation *Simulation) RunSimulation() {
 	}
 }
 
-func (simulation *Simulation) ParseSimulationResults() {
+func (simulation *Simulation) ParseSimulationResults() ([]string, []float64) {
 	// parse results
+	reportName := simulation.JobSubmission.SimFile + "_Report.csv"
+	file, err := os.Open(reportName)
+	if err != nil {
+		simulation.Logger.Error("Failed to parse simulation results", err)
+	}
+	defer file.Close()
+
+	csvReader := csv.NewReader(file)
+
+	parameterNames, err := csvReader.Read()
+	if err != nil {
+		simulation.Logger.Error("Failed to read report header", err)
+		return nil, nil
+	}
+
+	parameterResults, err := csvReader.Read()
+	if err != nil {
+		simulation.Logger.Error("Failed to read report values", err)
+		return nil, nil
+	}
+
+	for i, parameterName := range parameterNames {
+		if _, exists := simulation.DesignObjectiveResults[parameterName]; exists {
+			result, err := strconv.ParseFloat(parameterResults[i], 64)
+			if err != nil {
+				simulation.Logger.Error("Error parsing float value", err)
+				continue
+			}
+			simulation.DesignObjectiveResults[parameterName] = result
+		}
+	}
+	floatResults, err := utils.ConvertStringSliceToFloat(parameterResults)
+	if err != nil {
+		simulation.Logger.Error("Failed to parse results into float slice", err)
+		return nil, nil
+	}
+	return parameterNames, floatResults
 }
 
 func (simulation *Simulation) SaveResults() {

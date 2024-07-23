@@ -31,7 +31,10 @@ func main() {
 	}
 
 	// Parse config file
-	config := config.ParseConfigFile(*inputFile)
+	config, err := config.ParseConfigFile(*inputFile)
+	if err != nil {
+		logger.Fatal("Unable to parse config file", err)
+	}
 	logger.Log(fmt.Sprintf("Input config file is: %s", *inputFile))
 
 	if *batchSystemFlag == "slurm" {
@@ -39,6 +42,6 @@ func main() {
 	}
 
 	// Create design manager
-	designManager := designmanager.NewDesignManager(config, logger)
+	designManager := designmanager.NewDesignManager(*config, logger)
 	designManager.Run()
 }

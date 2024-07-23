@@ -72,11 +72,10 @@ func ParseDesignManagerConfigFile(configFilePath string) types.ConfigFile {
 	return config
 }
 
-func ParseConfigFile(configFilePath string) ConfigFile {
+func ParseConfigFile(configFilePath string) (*ConfigFile, error) {
 	configFile, err := os.Open(configFilePath)
 	if err != nil {
-		// TODO: handle error
-		fmt.Println(err)
+		return nil, err
 	}
 	defer configFile.Close()
 
@@ -86,7 +85,7 @@ func ParseConfigFile(configFilePath string) ConfigFile {
 
 	err = json.Unmarshal(byteValue, &config)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
-	return config
+	return &config, nil
 }
