@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/csv"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -146,11 +145,14 @@ func WriteSimulationInputCSV(values []float64, file *os.File) {
 func ConvertStringSliceToFloat(strValues []string) ([]float64, error) {
 	floatValues := make([]float64, len(strValues))
 	for i, value := range strValues {
-		err := errors.New("parsefloat")
-		floatValues[i], err = strconv.ParseFloat(value, 64)
+		if value == "" {
+			continue
+		}
+		floatValue, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return nil, err
 		}
+		floatValues[i] = floatValue
 	}
 	return floatValues, nil
 }

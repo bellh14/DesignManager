@@ -150,7 +150,8 @@ func (simulation *Simulation) RunSimulation() {
 
 func (simulation *Simulation) ParseSimulationResults() ([]string, []float64) {
 	// parse results
-	reportName := simulation.JobSubmission.SimFile + "_Report.csv"
+	simName := strings.TrimSuffix(simulation.JobSubmission.SimFile, ".sim")
+	reportName := simulation.JobDir + "/" + simName + "_Report.csv"
 	file, err := os.Open(reportName)
 	if err != nil {
 		simulation.Logger.Error("Failed to parse simulation results", err)

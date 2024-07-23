@@ -60,7 +60,7 @@ func GenerateSlurmScript(slurmConfig SlurmConfig, configFile string) {
 	// TODO: make this less painful to read
 
 	slurmScript, err := os.Create(
-		fmt.Sprintf("%s%s.sh", slurmConfig.WorkingDir, slurmConfig.JobName),
+		fmt.Sprintf("%s/%s.sh", slurmConfig.WorkingDir, slurmConfig.JobName),
 	)
 	if err != nil {
 		// TODO: handle error
@@ -76,7 +76,7 @@ func GenerateSlurmScript(slurmConfig SlurmConfig, configFile string) {
 
 	fmt.Fprintf(slurmScript, "./DesignManager -config %s", configFile)
 
-	err = os.Chmod(fmt.Sprintf("%s%s.sh", slurmConfig.WorkingDir, slurmConfig.JobName), 0o777)
+	err = os.Chmod(fmt.Sprintf("%s/%s.sh", slurmConfig.WorkingDir, slurmConfig.JobName), 0o777)
 	if err != nil {
 		log.Fatal(err)
 	}

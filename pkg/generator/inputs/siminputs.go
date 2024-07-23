@@ -57,7 +57,11 @@ func CalculateStep(min float64, max float64, numSims int) float64 {
 		step = (max - min)
 	} else if min > 0 && numSims > 2 {
 		step = (max - min) / float64(numSims-1)
-	} else {
+	} else if max < 0 && numSims <= 2 {
+		step = math.Abs(min) - math.Abs(max)
+	} else if max < 0 && numSims > 2 {
+		step = (math.Abs(min) - math.Abs(max)) / float64(numSims-1)
+	} else { // min < 0, max > 0
 		step = (math.Abs(min) + math.Abs(max)) / float64(numSims-1)
 	}
 	return step

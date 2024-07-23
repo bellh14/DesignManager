@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
@@ -52,7 +53,7 @@ func (dm *DesignManager) HandleAeroMap() {
 	for i := 0; i < numberOfSweeps; i++ {
 		newDM := dm
 		inputOffset := i * offset
-		go newDM.HandleSweep(inputOffset, jobs)
+		go newDM.HandleSweep(inputOffset, offset, jobs)
 		// should really lock these...
 		// in practice the sweeps will never end close enough to cause an issue
 		dm.SimResultParams = newDM.SimResultParams
@@ -84,10 +85,10 @@ func (dm *DesignManager) HandleInputs() {
 	}
 }
 
-func (dm *DesignManager) HandleSweep(offset int, c chan int) {
+func (dm *DesignManager) HandleSweep(offset int, numSims int, c chan int) {
 	jobSubmission := jobscript.CreateJobSubmission(dm.ConfigFile)
 
-	for i := 1; i <= dm.ConfigFile.DesignStudyConfig.NumSims; i++ {
+	for i := 1; i <= numSims; i++ {
 		simNum := offset + i
 		inputs, err := dm.InputGenerator.SimInputByJobNumber(simNum)
 		if err != nil {
@@ -95,6 +96,14 @@ func (dm *DesignManager) HandleSweep(offset int, c chan int) {
 			dm.Logger.Error(fmt.Sprintf("Error Obtaining siminput for job number %d", simNum), err)
 		}
 		simLogger := log.NewLogger(0, fmt.Sprintf("Simulation: %d", simNum), "63")
+
+		designObjectives := make(
+			map[string]float64,
+			len(dm.ConfigFile.DesignStudyConfig.DesignObjectives),
+		)
+		for _, objective := range dm.ConfigFile.DesignStudyConfig.DesignObjectives {
+			designObjectives[objective.Name] = 0.0
+		}
 		sim := simulations.NewSimulation(&jobSubmission, simNum, inputs, simLogger)
 		sim.Run()
 		simParams, simResults := sim.ParseSimulationResults()
@@ -116,7 +125,7 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 	case "Sweep":
 		dm.Logger.Log("Running design sweep")
 		c := make(chan int, 1)
-		dm.HandleSweep(0, c)
+		dm.HandleSweep(0, dm.ConfigFile.DesignStudyConfig.NumSims, c)
 	default:
 		fmt.Println("Error: Study type not supported")
 		os.Exit(1)
@@ -124,7 +133,8 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 }
 
 func (dm *DesignManager) SaveCompiledResults() {
-	resultsFile, err := os.Create("Compiled_" + dm.ConfigFile.StarCCM.SimFile + "_Report.csv")
+	simName := strings.TrimSuffix(dm.ConfigFile.StarCCM.SimFile, ".sim")
+	resultsFile, err := os.Create("Compiled_" + simName + "_Report.csv")
 	if err != nil {
 		dm.Logger.Error("Failed to create results file", err)
 	}
