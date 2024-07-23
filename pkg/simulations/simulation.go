@@ -19,7 +19,7 @@ type Simulation struct {
 	JobSubmission          jobscript.JobSubmission
 	InputParameters        inputs.SimInputIteration
 	JobDir                 string
-	DesignObjectiveResults []float64
+	DesignObjectiveResults map[string]float64
 	Logger                 *log.Logger
 }
 

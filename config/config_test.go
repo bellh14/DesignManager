@@ -4,38 +4,41 @@ import (
 	"testing"
 
 	"github.com/bellh14/DesignManager/config"
-	"github.com/bellh14/DesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 )
 
-func compareSystemResourcesType(t *testing.T, got, want types.SystemResourcesType) {
+func compareSlurmConfig(t *testing.T, got, want batchsystem.SlurmConfig) {
 	t.Helper()
 	if got != want {
 		t.Errorf("got %v want %v", got, want)
 	}
 }
 
-func compareStarCCM(t *testing.T, got, want types.StarCCM) {
+func compareStarCCM(t *testing.T, got, want config.StarCCM) {
 	t.Helper()
 	if got != want {
 		t.Errorf("got %v want %v", got, want)
 	}
 }
 
-func compareDesignParameter(t *testing.T, got, want types.DesignParameter) {
+func compareDesignParameter(t *testing.T, got, want config.DesignParameter) {
 	t.Helper()
 	if got != want {
 		t.Errorf("got %v want %v", got, want)
 	}
 }
 
-func compareDesignObjective(t *testing.T, got, want types.DesignObjective) {
+func compareDesignObjective(t *testing.T, got, want config.DesignObjective) {
 	t.Helper()
 	if got != want {
 		t.Errorf("got %v want %v", got, want)
 	}
 }
 
-func compareDesignManagerInputParameters(t *testing.T, got, want types.DesignManagerInputParameters) {
+func compareDesignManagerInputParameters(
+	t *testing.T,
+	got, want config.DesignStudyConfig,
+) {
 	t.Helper()
 	if got.NumSims != want.NumSims {
 		t.Errorf("got %v want %v", got.NumSims, want.NumSims)
@@ -57,87 +60,98 @@ func compareDesignManagerInputParameters(t *testing.T, got, want types.DesignMan
 	}
 }
 
-func compareAll(t *testing.T, got, want types.ConfigFile) {
+func compareAll(t *testing.T, got, want config.ConfigFile) {
 	t.Helper()
-	compareSystemResourcesType(t, got.SystemResources, want.SystemResources)
+	compareSlurmConfig(t, got.SlurmConfig, want.SlurmConfig)
 	if got.WorkingDir != want.WorkingDir {
 		t.Errorf("got %v want %v", got.WorkingDir, want.WorkingDir)
 	}
 	compareStarCCM(t, got.StarCCM, want.StarCCM)
-	compareDesignManagerInputParameters(t, got.DesignManagerInputParameters, want.DesignManagerInputParameters)
+	compareDesignManagerInputParameters(
+		t,
+		got.DesignStudyConfig,
+		want.DesignStudyConfig,
+	)
 }
 
 func TestParseDesignManagerConfigFile(t *testing.T) {
-	configFilePath := "../data/inputs/DesignManagerConfig.json"
-	configFile := config.ParseDesignManagerConfigFile(configFilePath)
+	configFilePath := "../data/inputs/aeromap.json"
+	configFile := config.ParseConfigFile(configFilePath)
 
-	expectedSystemResources := types.SystemResourcesType{
-		Partition: "normal",
-		Nodes:     16,
-		Ntasks:    16,
+	expectedSlurmInputs := batchsystem.SlurmConfig{
+		WorkingDir: ".",
+		JobName:    "2024AeroSweep",
+		Nodes:      1,
+		Ntasks:     16,
+		Partition:  "icx",
+		WallTime:   "24:00:00",
+		Email:      "test@gmail.com",
+		MailType:   "all",
+		OutputFile: "output.txt",
+		ErrorFile:  "error.txt",
 	}
 
-	expectedWorkingDir := "/scratch/ganymede/<user>/DM/"
+	expectedWorkingDir := "."
 
-	expectedStarCCM := types.StarCCM{
-		StarPath:  "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
-		PodKey:    "<podkey>",
-		JavaMacro: "macro.java",
-		SimFile:   "simfile.sim",
+	expectedStarCCM := config.StarCCM{
+		StarPath:  "/opt/Siemens/19.02.013/STAR-CCM+19.02.013/star/bin/",
+		PodKey:    "123456789",
+		JavaMacro: "AirfoilAOA.java",
+		SimFile:   "S1223.sim",
 	}
 
-	expectedDesignParameter1 := types.DesignParameter{
-		Name:    "Design Parameter 1",
-		Min:     0.0,
-		Max:     1.0,
-		Step:    0.1,
-		NumSims: 8,
+	expectedDesignParameter1 := config.DesignParameter{
+		Name:    "Chassis Angle",
+		Units:   "deg",
+		Min:     -1.3,
+		Max:     1.3,
+		NumSims: 9,
 	}
 
-	expectedDesignParameter2 := types.DesignParameter{
-		Name:    "Design Parameter 2",
-		Min:     0.0,
-		Max:     1.0,
-		Step:    0.1,
-		NumSims: 8,
+	expectedDesignParameter2 := config.DesignParameter{
+		Name:    "Chassis Heave",
+		Units:   "inches",
+		Min:     -1.69,
+		Max:     0.31,
+		NumSims: 9,
 	}
 
-	expectedDesignParameters := []types.DesignParameter{
+	expectedDesignParameters := []config.DesignParameter{
 		expectedDesignParameter1,
 		expectedDesignParameter2,
 	}
 
-	expectedDesignObjective1 := types.DesignObjective{
+	expectedDesignObjective1 := config.DesignObjective{
 		Name:   "Design Objective 1",
 		Weight: 1.0,
 		Goal:   "Maximize",
 	}
 
-	expectedDesignObjective2 := types.DesignObjective{
+	expectedDesignObjective2 := config.DesignObjective{
 		Name:   "Design Objective 2",
 		Weight: 0.75,
 		Goal:   "Minimize",
 	}
 
-	expectedDesignObjectives := []types.DesignObjective{
+	expectedDesignObjectives := []config.DesignObjective{
 		expectedDesignObjective1,
 		expectedDesignObjective2,
 	}
 
-	expectedDesignManagerParameters := types.DesignManagerInputParameters{
-		NumSims:               100,
-		NtasksPerSim:          -1,
-		StudyType:             "Pareto",
+	expectedDesignStudyConfig := config.DesignStudyConfig{
+		NumSims:               81,
+		NtasksPerSim:          16,
+		StudyType:             "AeroMap",
 		OptimizationAlgorithm: "NSGA-II",
 		DesignParameters:      expectedDesignParameters,
 		DesignObjectives:      expectedDesignObjectives,
 	}
 
-	expectedConfigFile := types.ConfigFile{
-		SystemResources:              expectedSystemResources,
-		WorkingDir:                   expectedWorkingDir,
-		StarCCM:                      expectedStarCCM,
-		DesignManagerInputParameters: expectedDesignManagerParameters,
+	expectedConfigFile := config.ConfigFile{
+		SlurmConfig:       expectedSlurmInputs,
+		WorkingDir:        expectedWorkingDir,
+		StarCCM:           expectedStarCCM,
+		DesignStudyConfig: expectedDesignStudyConfig,
 	}
 
 	compareAll(t, configFile, expectedConfigFile)

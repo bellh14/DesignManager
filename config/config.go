@@ -27,12 +27,21 @@ type DesignParameter struct {
 	Step    float64 `json:"Step"`
 	NumSims int     `json:"NumSims"`
 }
+
+type DesignObjective struct {
+	Name   string  `json:"Name"`
+	Goal   string  `json:"Goal"`   // minimize or maximize, ex: df would want maximize while drag minimize
+	Weight float32 `json:"Weight"` // may no explicitly use this
+}
+
 type DesignStudyConfig struct {
-	StudyType        string            `json:"StudyType"`
-	StudyConfigDir   string            `json:"StudyConfigDir"` // optional dir for storing study configs ie sim inputs
-	NtasksPerSim     int               `json:"NtasksPerSim"`
-	NumSims          int               `json:"NumSims"`
-	DesignParameters []DesignParameter `json:"DesignParameters"`
+	StudyType             string            `json:"StudyType"`
+	StudyConfigDir        string            `json:"StudyConfigDir"` // optional dir for storing study configs ie sim inputs
+	NtasksPerSim          int               `json:"NtasksPerSim"`
+	NumSims               int               `json:"NumSims"`
+	OptimizationAlgorithm string            `json:"OptimizationAlgorithm"`
+	DesignParameters      []DesignParameter `json:"DesignParameters"`
+	DesignObjectives      []DesignObjective `json:"DesignObjective"`
 }
 
 type ConfigFile struct {
