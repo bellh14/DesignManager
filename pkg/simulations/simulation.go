@@ -187,6 +187,7 @@ func (simulation *Simulation) ParseSimulationResults() ([]string, []float64) {
 		simulation.Logger.Error("Failed to parse results into float slice", err)
 		return nil, nil
 	}
+	fmt.Println(simulation.DesignObjectiveResults)
 	return parameterNames, floatResults
 }
 

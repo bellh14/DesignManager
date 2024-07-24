@@ -26,6 +26,8 @@ type DesignParameter struct {
 	Max     float64 `json:"Max"`
 	Step    float64 `json:"Step"`
 	NumSims int     `json:"NumSims"`
+	Mean    float64
+	StdDev  float64
 }
 
 type DesignObjective struct {
@@ -34,14 +36,22 @@ type DesignObjective struct {
 	Weight float32 `json:"Weight"` // may no explicitly use this
 }
 
+type MOOConfig struct {
+	NumGenerations        int     `json:"NumGenerations"`
+	NumSimsPerGeneration  int     `json:"NumSimsPerGeneration"`
+	OptimizationAlgorithm string  `json:"OptimizationAlgorithm"`
+	MutationRate          float32 `json:"MutationRate"`
+}
+
 type DesignStudyConfig struct {
 	StudyType             string            `json:"StudyType"`
+	MOOConfig             MOOConfig         `json:"MOOConfig"`      // optional for temp genetic optimization
 	StudyConfigDir        string            `json:"StudyConfigDir"` // optional dir for storing study configs ie sim inputs
 	NtasksPerSim          int               `json:"NtasksPerSim"`
 	NumSims               int               `json:"NumSims"`
 	OptimizationAlgorithm string            `json:"OptimizationAlgorithm"`
 	DesignParameters      []DesignParameter `json:"DesignParameters"`
-	DesignObjectives      []DesignObjective `json:"DesignObjective"`
+	DesignObjectives      []DesignObjective `json:"DesignObjectives"`
 }
 
 type ConfigFile struct {

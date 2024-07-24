@@ -10,6 +10,7 @@ import (
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
+	"github.com/bellh14/DesignManager/pkg/optimization/genetic"
 	"github.com/bellh14/DesignManager/pkg/simulations"
 	"github.com/bellh14/DesignManager/pkg/utils"
 	"github.com/bellh14/DesignManager/pkg/utils/log"
@@ -114,14 +115,142 @@ func (dm *DesignManager) HandleSweep(offset int, numSims int, c chan int) {
 	c <- 1 // signals sweep is finished
 }
 
+// yes this is dumb
+func (dm *DesignManager) HandleSim(sim *simulations.Simulation, c chan int) {
+	designObjectives := make(
+		map[string]float64,
+		len(dm.ConfigFile.DesignStudyConfig.DesignObjectives),
+	)
+	for _, objective := range dm.ConfigFile.DesignStudyConfig.DesignObjectives {
+		designObjectives[objective.Name] = 0.0
+	}
+
+	sim.DesignObjectiveResults = designObjectives
+	sim.Run()
+	simParams, simResults := sim.ParseSimulationResults()
+	dm.SimResultParams = simParams
+	dm.SimResults = append(dm.SimResults, simResults)
+	dm.Logger.Log("Finished handling sim")
+	c <- 1
+}
+
+func (dm *DesignManager) HandlePareto() {
+	dsc := dm.ConfigFile.DesignStudyConfig
+	mooConfig := dm.ConfigFile.DesignStudyConfig.MOOConfig
+	numSimsPerGeneration := mooConfig.NumSimsPerGeneration
+
+	dm.Logger.Log("Initializing the population")
+	population := genetic.InitializePopulation(numSimsPerGeneration, dm.ConfigFile)
+
+	for generation := 0; generation < mooConfig.NumGenerations; generation++ {
+		dm.Logger.Log(fmt.Sprintf("Starting Generation: %d\n", generation))
+		if generation == 0 {
+			jobs := make(chan int, numSimsPerGeneration)
+
+			for i := 0; i < numSimsPerGeneration; i++ {
+				newDM := dm
+				go newDM.HandleSim(population[i].Sim, jobs)
+				dm.SimResultParams = newDM.SimResultParams
+				dm.SimResults = append(dm.SimResults, newDM.SimResults...)
+			}
+
+			for i := 0; i < numSimsPerGeneration; i++ {
+				<-jobs
+			}
+
+			dm.Logger.Log("Finished running generation 0")
+
+			dm.Logger.Log("Evaluating Best and sorting population")
+			population = genetic.Evaluate(population, dsc)
+			dm.Logger.Log("Sorted Population, top 2 will be parents of next: \n")
+			for _, ind := range population {
+				dm.Logger.Log(
+					fmt.Sprintf(
+						"Parameters: %v\n, ObjectiveResults: %v\n, Fitness: %f\n",
+						ind.Sim.InputParameters,
+						ind.Sim.DesignObjectiveResults,
+						ind.Fitness,
+					),
+				)
+			}
+			continue
+		}
+		newPopulation := make(genetic.Population, 0, numSimsPerGeneration)
+		i := 1
+		for len(newPopulation) < numSimsPerGeneration {
+			parent1 := population[len(population)-1]
+			parent2 := population[len(population)-2]
+
+			// create sim for child
+			jobSubmission := jobscript.CreateJobSubmission(dm.ConfigFile)
+			simInputs := genetic.SampleInputs(dsc) // temp until crossover and mutate
+			simNum := (generation * numSimsPerGeneration) + i
+			simLogger := log.NewLogger(0, fmt.Sprintf("Simulation: %d", simNum), "63")
+			sim := simulations.NewSimulation(&jobSubmission, simNum, simInputs, simLogger)
+
+			child := genetic.Individual{
+				Sim:     sim,
+				Fitness: 0.0,
+			}
+
+			genetic.Crossover(parent1, parent2, &child, dsc)
+			genetic.Mutate(&child, mooConfig.MutationRate, dsc)
+			newPopulation = append(newPopulation, child)
+
+			i += 1
+		}
+
+		jobs := make(chan int, numSimsPerGeneration)
+		for i := 0; i < numSimsPerGeneration; i++ {
+			newDM := dm
+			go newDM.HandleSim(newPopulation[i].Sim, jobs)
+			dm.SimResultParams = newDM.SimResultParams
+			dm.SimResults = append(dm.SimResults, newDM.SimResults...)
+		}
+
+		for i := 0; i < numSimsPerGeneration; i++ {
+			<-jobs
+		}
+
+		dm.Logger.Log(fmt.Sprintf("Finshed running generation: %d", generation))
+
+		dm.Logger.Log("Evaluating Best and sorting population")
+		newPopulation = genetic.Evaluate(newPopulation, dsc)
+		dm.Logger.Log("Sorted Population, top 2 will be parents of next: \n")
+		for _, ind := range newPopulation {
+			dm.Logger.Log(
+				fmt.Sprintf(
+					"Parameters: %v\n, ObjectiveResults: %v\n, Fitness: %f\n",
+					ind.Sim.InputParameters,
+					ind.Sim.DesignObjectiveResults,
+					ind.Fitness,
+				),
+			)
+		}
+
+		population = newPopulation
+	}
+	dm.Logger.Log("Finished running last generation\n\nFinal Population:")
+	for _, ind := range population {
+		dm.Logger.Log(
+			fmt.Sprintf(
+				"Parameters: %v\n, ObjectiveResults: %v\n, Fitness: %f\n",
+				ind.Sim.InputParameters,
+				ind.Sim.DesignObjectiveResults,
+				ind.Fitness,
+			),
+		)
+	}
+}
+
 func (dm *DesignManager) HandleDesignStudy(studyType string) {
 	switch studyType {
 	case "AeroMap":
 		dm.Logger.Log("Running AeroMap")
 		dm.HandleAeroMap()
 	case "Pareto":
-		// dm.HandlePareto()
-		fmt.Println("TODO: Implement Pareto")
+		dm.HandlePareto()
+		dm.Logger.Log("Running Pareto Study")
 	case "Sweep":
 		dm.Logger.Log("Running design sweep")
 		c := make(chan int, 1)
