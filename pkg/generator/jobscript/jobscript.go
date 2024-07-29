@@ -51,7 +51,7 @@ func GenerateJobScript(jobScriptInputs JobSubmission, jobNumber int) {
 	// jobScript.WriteString("mkdir $WorkingDir/$JobNumber\n\n")
 
 	jobScript.WriteString(
-		`$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks -time -batch-report -bs slurm > $WorkingDir/output.txt 2>&1`,
+		`$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks -time -batch-report > $WorkingDir/output.txt 2>&1`,
 	)
 
 	jobScript.WriteString("\n\n")

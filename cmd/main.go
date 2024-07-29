@@ -39,6 +39,9 @@ func main() {
 
 	if *batchSystemFlag == "slurm" {
 		batchsystem.GenerateSlurmScript(config.SlurmConfig, *inputFile)
+		// dumb and tempory for now till refactor
+		logger.Log("Created slurm batch script. Exiting...")
+		os.Exit(0)
 	}
 
 	// Create design manager

@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
@@ -49,22 +50,26 @@ func (dm *DesignManager) HandleAeroMap() {
 
 	// buffered channel 2nd param is for number of sweeps to run in parallel
 	jobs := make(chan int, numberOfSweeps)
+	wg := sync.WaitGroup{}
 
 	// start sweeps
-	for i := 0; i < numberOfSweeps; i++ {
+	for i := range numberOfSweeps {
+		wg.Add(1)
+		jobs <- 1
 		newDM := dm
-		inputOffset := i * offset
-		go newDM.HandleSweep(inputOffset, offset, jobs)
-		// should really lock these...
-		// in practice the sweeps will never end close enough to cause an issue
-		dm.SimResultParams = newDM.SimResultParams
-		dm.SimResults = append(dm.SimResults, newDM.SimResults...)
-	}
+		go func(i int) {
+			inputOffset := i * offset
+			newDM.HandleSweep(inputOffset, offset)
+			<-jobs
+			// should really lock these...
+			// in practice the sweeps will never end close enough to cause an issue
+			dm.SimResultParams = newDM.SimResultParams
+			dm.SimResults = append(dm.SimResults, newDM.SimResults...)
+			defer wg.Done()
+		}(i)
 
-	// drain the channel
-	for i := 0; i < numberOfSweeps; i++ {
-		<-jobs // wait for task to complete
 	}
+	wg.Wait()
 
 	dm.Logger.Log("Finished Running AeroMap")
 }
@@ -86,7 +91,7 @@ func (dm *DesignManager) HandleInputs() {
 	}
 }
 
-func (dm *DesignManager) HandleSweep(offset int, numSims int, c chan int) {
+func (dm *DesignManager) HandleSweep(offset int, numSims int) {
 	jobSubmission := jobscript.CreateJobSubmission(dm.ConfigFile)
 
 	for i := 1; i <= numSims; i++ {
@@ -112,11 +117,10 @@ func (dm *DesignManager) HandleSweep(offset int, numSims int, c chan int) {
 		dm.SimResults = append(dm.SimResults, simResults)
 	}
 	dm.Logger.Log("Finished running design sweep")
-	c <- 1 // signals sweep is finished
 }
 
 // yes this is dumb
-func (dm *DesignManager) HandleSim(sim *simulations.Simulation, c chan int) {
+func (dm *DesignManager) HandleSim(sim *simulations.Simulation) {
 	designObjectives := make(
 		map[string]float64,
 		len(dm.ConfigFile.DesignStudyConfig.DesignObjectives),
@@ -131,7 +135,6 @@ func (dm *DesignManager) HandleSim(sim *simulations.Simulation, c chan int) {
 	dm.SimResultParams = simParams
 	dm.SimResults = append(dm.SimResults, simResults)
 	dm.Logger.Log("Finished handling sim")
-	c <- 1
 }
 
 func (dm *DesignManager) HandlePareto() {
@@ -146,19 +149,23 @@ func (dm *DesignManager) HandlePareto() {
 		dm.Logger.Log(fmt.Sprintf("Starting Generation: %d\n", generation))
 		if generation == 0 {
 			jobs := make(chan int, numSimsPerGeneration)
+			wg := sync.WaitGroup{}
 
-			for i := 0; i < numSimsPerGeneration; i++ {
+			for i := range numSimsPerGeneration {
+				wg.Add(1)
+				jobs <- 1
 				newDM := dm
-				go newDM.HandleSim(population[i].Sim, jobs)
-				dm.SimResultParams = newDM.SimResultParams
-				dm.SimResults = append(dm.SimResults, newDM.SimResults...)
+				go func(i int) {
+					newDM.HandleSim(population[i].Sim)
+					<-jobs
+					dm.SimResultParams = newDM.SimResultParams
+					dm.SimResults = append(dm.SimResults, newDM.SimResults...)
+					defer wg.Done()
+				}(i)
 			}
+			wg.Wait()
 
-			for i := 0; i < numSimsPerGeneration; i++ {
-				<-jobs
-			}
-
-			dm.Logger.Log("Finished running generation 0")
+			dm.Logger.Log("Finished running generation 1")
 
 			dm.Logger.Log("Evaluating Best and sorting population")
 			population = genetic.Evaluate(population, dsc)
@@ -201,16 +208,22 @@ func (dm *DesignManager) HandlePareto() {
 		}
 
 		jobs := make(chan int, numSimsPerGeneration)
-		for i := 0; i < numSimsPerGeneration; i++ {
-			newDM := dm
-			go newDM.HandleSim(newPopulation[i].Sim, jobs)
-			dm.SimResultParams = newDM.SimResultParams
-			dm.SimResults = append(dm.SimResults, newDM.SimResults...)
-		}
+		wg := sync.WaitGroup{}
 
-		for i := 0; i < numSimsPerGeneration; i++ {
-			<-jobs
+		for i := range numSimsPerGeneration {
+			wg.Add(1)
+			jobs <- 1
+			newDM := dm
+			go func(i int) {
+				newDM.HandleSim(newPopulation[i].Sim)
+				<-jobs
+				dm.SimResultParams = newDM.SimResultParams
+				dm.SimResults = append(dm.SimResults, newDM.SimResults...)
+				defer wg.Done()
+			}(i)
+
 		}
+		wg.Wait()
 
 		dm.Logger.Log(fmt.Sprintf("Finshed running generation: %d", generation))
 
@@ -253,8 +266,7 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 		dm.Logger.Log("Running Pareto Study")
 	case "Sweep":
 		dm.Logger.Log("Running design sweep")
-		c := make(chan int, 1)
-		dm.HandleSweep(0, dm.ConfigFile.DesignStudyConfig.NumSims, c)
+		dm.HandleSweep(0, dm.ConfigFile.DesignStudyConfig.NumSims)
 	default:
 		fmt.Println("Error: Study type not supported")
 		os.Exit(1)
