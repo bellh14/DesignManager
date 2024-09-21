@@ -39,7 +39,9 @@ func (dm *DesignManager) Run() {
 		dm.Logger.Log("Use DM set to false. Exiting")
 		return
 	}
-	dm.HandleInputs()
+	if dm.ConfigFile.DesignStudyConfig.StudyType != "Pareto" {
+		dm.HandleInputs()
+	}
 	dm.HandleDesignStudy(dm.ConfigFile.DesignStudyConfig.StudyType)
 	dm.SaveCompiledResults()
 }
@@ -110,7 +112,14 @@ func (dm *DesignManager) HandleSweep(offset int, numSims int) {
 		for _, objective := range dm.ConfigFile.DesignStudyConfig.DesignObjectives {
 			designObjectives[objective.Name] = 0.0
 		}
-		sim := simulations.NewSimulation(&jobSubmission, simNum, inputs, simLogger)
+		sim := simulations.NewSimulation(
+			&jobSubmission,
+			simNum,
+			inputs,
+			simLogger,
+			dm.ConfigFile.SlurmConfig,
+			dm.ConfigFile.SlurmConfig.NodeList[i],
+		)
 		sim.Run()
 		simParams, simResults := sim.ParseSimulationResults()
 		dm.SimResultParams = simParams
@@ -193,7 +202,14 @@ func (dm *DesignManager) HandlePareto() {
 			simInputs := genetic.SampleInputs(dsc) // temp until crossover and mutate
 			simNum := (generation * numSimsPerGeneration) + i
 			simLogger := log.NewLogger(0, fmt.Sprintf("Simulation: %d", simNum), "63")
-			sim := simulations.NewSimulation(&jobSubmission, simNum, simInputs, simLogger)
+			sim := simulations.NewSimulation(
+				&jobSubmission,
+				simNum,
+				simInputs,
+				simLogger,
+				dm.ConfigFile.SlurmConfig,
+				dm.ConfigFile.SlurmConfig.NodeList[i-1],
+			)
 
 			child := genetic.Individual{
 				Sim:     sim,

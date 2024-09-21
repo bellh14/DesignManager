@@ -7,34 +7,55 @@ import (
 	"reflect"
 
 	"github.com/bellh14/DesignManager/config"
+	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
+	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/utils"
 )
 
 type JobSubmission struct {
-	WorkingDir string
-	Ntasks     int
-	StarPath   string
-	PodKey     string
-	JavaMacro  string
-	SimFile    string
+	WorkingDir     string
+	Ntasks         int
+	StarPath       string
+	PodKey         string
+	JavaMacro      string
+	SimFile        string
+	Params         string
+	StarWorkingDir string // I hate this, but will change later
 }
 
 func CreateJobSubmission(config config.ConfigFile) JobSubmission {
 	jobSumssion := JobSubmission{
-		WorkingDir: config.WorkingDir,
-		Ntasks:     config.DesignStudyConfig.NtasksPerSim,
-		StarPath:   config.StarCCM.StarPath,
-		PodKey:     config.StarCCM.PodKey,
-		JavaMacro:  config.StarCCM.JavaMacro,
-		SimFile:    config.StarCCM.SimFile,
+		WorkingDir:     config.WorkingDir,
+		Ntasks:         config.DesignStudyConfig.NtasksPerSim,
+		StarPath:       config.StarCCM.StarPath,
+		PodKey:         config.StarCCM.PodKey,
+		JavaMacro:      config.StarCCM.JavaMacro,
+		SimFile:        config.StarCCM.SimFile,
+		StarWorkingDir: config.StarCCM.WorkingDir,
 	}
 	return jobSumssion
 }
 
-func GenerateJobScript(jobScriptInputs JobSubmission, jobNumber int) {
+func CreateParamsString(inputs inputs.SimInputIteration) string {
+	paramString := ""
+	for i := range inputs.Name {
+		paramString += fmt.Sprintf("-param \"%s\" %f ", inputs.Name[i], inputs.Value[i])
+	}
+	return paramString
+}
+
+func GenerateJobScript(
+	jobScriptInputs JobSubmission,
+	jobNumber int,
+	inputs inputs.SimInputIteration,
+	slurmConfig batchsystem.SlurmConfig,
+	hostName string,
+) {
+	paramString := CreateParamsString(inputs)
+
 	// TODO: make this less painful to read
 	jobDir := jobScriptInputs.WorkingDir + "/" + fmt.Sprint(jobNumber)
-	jobScriptInputs.WorkingDir = jobDir
+	jobScriptInputs.StarWorkingDir += "/" + fmt.Sprint(jobNumber)
 	jobScript, err := os.Create(fmt.Sprintf("%s/sim_%d.sh", jobDir, jobNumber))
 	if err != nil {
 		// TODO: handle error
@@ -42,17 +63,37 @@ func GenerateJobScript(jobScriptInputs JobSubmission, jobNumber int) {
 	}
 	defer jobScript.Close()
 
+	jobScriptInputs.WorkingDir = jobScriptInputs.StarWorkingDir
+
 	jobScript.WriteString("#!/bin/bash\n\n")
+
+	batchsystem.WriteStructOfSlurmVariables(reflect.ValueOf(slurmConfig), jobScript)
 
 	jobSubmissionValues := reflect.ValueOf(jobScriptInputs)
 
 	utils.WriteStructOfBashVariables(jobSubmissionValues, jobScript, []string{})
 
+	jobScript.WriteString("\ncd $StarWorkingDir\n\n")
+
 	// jobScript.WriteString("mkdir $WorkingDir/$JobNumber\n\n")
 
+	// coreOffset := jobScriptInputs.Ntasks * (jobNumber % 2) // TODO temp since we are running 56x2
+
 	jobScript.WriteString(
-		`$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks -time -batch-report > $WorkingDir/output.txt 2>&1`,
+		fmt.Sprintf(
+			"$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s-on %s -time -batch-report > $WorkingDir/output.txt 2>&1",
+			// jobScriptInputs.Ntasks,
+			// coreOffset,
+			paramString,
+			hostName,
+		),
 	)
+	// jobScript.WriteString(
+	// 	fmt.Sprintf(
+	// 		"$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $JavaMacro $SimFile -np $Ntasks %s -time -batch-report",
+	// 		paramString,
+	// 	),
+	// )
 
 	jobScript.WriteString("\n\n")
 	jobScript.WriteString("exit_code=$?\n")

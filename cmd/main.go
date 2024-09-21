@@ -17,6 +17,7 @@ func main() {
 
 	inputFile := flag.String("config", "", "Input file")
 	batchSystemFlag := flag.String("bs", "", "batch system (only supports slurm right now)")
+	slurmNodeList := flag.String("slurmNodeList", "", "List of slurm nodes allocated")
 	flag.Parse()
 
 	if *inputFile == "" {
@@ -42,6 +43,24 @@ func main() {
 		// dumb and tempory for now till refactor
 		logger.Log("Created slurm batch script. Exiting...")
 		os.Exit(0)
+	}
+
+	if *slurmNodeList != "" {
+		logger.Log("Allocating on slurm nodes: " + *slurmNodeList)
+		nodes, err := batchsystem.ParseNodeList(*slurmNodeList, config.SlurmConfig.HostName)
+		if len(nodes) == 0 {
+			nodes = append(nodes, *slurmNodeList+"."+config.SlurmConfig.HostName)
+		}
+		if err != nil {
+			logger.Fatal("Unable to parse slurm node list", err)
+		}
+		for _, node := range nodes {
+			logger.Log(node)
+		}
+		simsPerNode := (config.SlurmConfig.Ntasks / config.SlurmConfig.Nodes) / config.DesignStudyConfig.NtasksPerSim
+		fullNodeList := batchsystem.DuplicateNodes(nodes, simsPerNode)
+
+		config.SlurmConfig.NodeList = fullNodeList
 	}
 
 	// Create design manager

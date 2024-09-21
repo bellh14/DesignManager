@@ -13,10 +13,11 @@ import (
 )
 
 type StarCCM struct {
-	StarPath  string `json:"StarPath"`
-	PodKey    string `json:"PodKey"`
-	JavaMacro string `json:"JavaMacro"`
-	SimFile   string `json:"SimFile"`
+	StarPath   string `json:"StarPath"`
+	PodKey     string `json:"PodKey"`
+	JavaMacro  string `json:"JavaMacro"`
+	SimFile    string `json:"SimFile"`
+	WorkingDir string `json:"WorkingDir"` // dumb bs that needs to be set to start remote star remote servers
 }
 
 type DesignParameter struct {

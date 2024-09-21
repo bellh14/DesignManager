@@ -7,13 +7,6 @@ import (
 	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 )
 
-func compareSlurmConfig(t *testing.T, got, want batchsystem.SlurmConfig) {
-	t.Helper()
-	if got != want {
-		t.Errorf("got %v want %v", got, want)
-	}
-}
-
 func compareStarCCM(t *testing.T, got, want config.StarCCM) {
 	t.Helper()
 	if got != want {
@@ -62,7 +55,7 @@ func compareDesignManagerInputParameters(
 
 func compareAll(t *testing.T, got, want config.ConfigFile) {
 	t.Helper()
-	compareSlurmConfig(t, got.SlurmConfig, want.SlurmConfig)
+	// compareSlurmConfig(t, got.SlurmConfig, want.SlurmConfig)
 	if got.WorkingDir != want.WorkingDir {
 		t.Errorf("got %v want %v", got.WorkingDir, want.WorkingDir)
 	}

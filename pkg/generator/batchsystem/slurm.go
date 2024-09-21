@@ -5,19 +5,24 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"regexp"
+	"strconv"
+	"strings"
 )
 
 type SlurmConfig struct {
-	JobName    string `json:"JobName"`
-	Partition  string `json:"Partition"`
-	Nodes      int    `json:"Nodes"`
-	Ntasks     int    `json:"Ntasks"`
-	WallTime   string `json:"WallTime"` // "hh:mm:ss"
-	Email      string `json:"Email"`
-	MailType   string `json:"MailType"` // "begin", "end", "fail", "all"
-	OutputFile string `json:"OutputFile"`
-	ErrorFile  string `json:"ErrorFile"`
-	WorkingDir string `json:"WorkingDir"`
+	HostName   string   `json:"HostName"`
+	JobName    string   `json:"JobName"`
+	Partition  string   `json:"Partition"`
+	Nodes      int      `json:"Nodes"`
+	Ntasks     int      `json:"Ntasks"`
+	WallTime   string   `json:"WallTime"` // "hh:mm:ss"
+	Email      string   `json:"Email"`
+	MailType   string   `json:"MailType"` // "begin", "end", "fail", "all"
+	OutputFile string   `json:"OutputFile"`
+	ErrorFile  string   `json:"ErrorFile"`
+	WorkingDir string   `json:"WorkingDir"`
+	NodeList   []string `json:"NodeList"`
 }
 
 func WriteSlurmVariable(file *os.File, name string, value any) {
@@ -33,10 +38,10 @@ func WriteSlurmVariable(file *os.File, name string, value any) {
 		fmt.Fprintf(file, "#SBATCH\t\t-n %d\n", value)
 	case "WallTime":
 		fmt.Fprintf(file, "#SBATCH\t\t-t %s\n", value)
-	case "Email":
-		fmt.Fprintf(file, "#SBATCH\t\t-mail-user=%s\n", value)
-	case "MailType":
-		fmt.Fprintf(file, "#SBATCH\t\t-mail-type=%s\n", value)
+	// case "Email":
+	// 	fmt.Fprintf(file, "#SBATCH\t\t-mail-user=%s\n", value)
+	// case "MailType":
+	// 	fmt.Fprintf(file, "#SBATCH\t\t-mail-type=%s\n", value)
 	case "OutputFile":
 		fmt.Fprintf(file, "#SBATCH\t\t-o \"%s\"\n", value)
 	case "ErrorFile":
@@ -80,4 +85,70 @@ func GenerateSlurmScript(slurmConfig SlurmConfig, configFile string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func parseNodeRange(nodePrefix, rangePart string, hostName string) ([]string, error) {
+	if !strings.Contains(rangePart, "-") {
+		num, err := strconv.Atoi(rangePart)
+		if err != nil {
+			return nil, err
+		}
+		node := fmt.Sprintf("%s%03d.%s", nodePrefix, num, hostName)
+		return []string{node}, nil
+	}
+
+	rangeParts := strings.Split(rangePart, "-")
+
+	start, err := strconv.Atoi(rangeParts[0])
+	if err != nil {
+		return nil, fmt.Errorf("invalid node start number: %v", err)
+	}
+	end, err := strconv.Atoi(rangeParts[1])
+	if err != nil {
+		return nil, fmt.Errorf("invalid end number: %v", err)
+	}
+	var nodes []string
+	for i := start; i <= end; i++ {
+		node := fmt.Sprintf("%s%03d.%s", nodePrefix, i, hostName)
+		nodes = append(nodes, node)
+	}
+	return nodes, nil
+}
+
+func ParseNodeList(slurmNodeList string, hostName string) ([]string, error) {
+	var allNodes []string
+
+	// "c519-[051-054,061-064,071-074,081-084]"
+	re := regexp.MustCompile(`([a-zA-Z0-9\-]+)\[(.*?)\]`)
+
+	matches := re.FindAllStringSubmatch(slurmNodeList, -1)
+
+	for _, match := range matches {
+		nodePrefix := match[1]
+		rangePart := match[2]
+
+		ranges := strings.Split(rangePart, ",")
+
+		for _, r := range ranges {
+			nodes, err := parseNodeRange(nodePrefix, r, hostName)
+			if err != nil {
+				return nil, err
+			}
+			allNodes = append(allNodes, nodes...)
+		}
+	}
+
+	return allNodes, nil
+}
+
+func DuplicateNodes(nodes []string, simsPerNode int) []string {
+	var duplicateNodes []string
+
+	for _, node := range nodes {
+		for range simsPerNode {
+			duplicateNodes = append(duplicateNodes, node)
+		}
+	}
+
+	return duplicateNodes
 }

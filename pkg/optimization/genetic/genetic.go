@@ -78,7 +78,14 @@ func InitializePopulation(size int, dmConfig config.ConfigFile) Population {
 	for i := 0; i < size; i++ {
 		simInputs := SampleInputs(dmConfig.DesignStudyConfig)
 		simLogger := log.NewLogger(0, fmt.Sprintf("Simulation: %d", i), "63")
-		sim := simulations.NewSimulation(&jobSubmission, i, simInputs, simLogger)
+		sim := simulations.NewSimulation(
+			&jobSubmission,
+			i,
+			simInputs,
+			simLogger,
+			dmConfig.SlurmConfig,
+			dmConfig.SlurmConfig.NodeList[i],
+		)
 		individual := Individual{
 			Sim:     sim,
 			Fitness: 1.0,

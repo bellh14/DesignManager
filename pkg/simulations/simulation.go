@@ -8,8 +8,10 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	e "github.com/bellh14/DesignManager/pkg/err"
+	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
 	"github.com/bellh14/DesignManager/pkg/utils"
@@ -23,6 +25,8 @@ type Simulation struct {
 	JobDir                 string
 	DesignObjectiveResults map[string]float64
 	Logger                 *log.Logger
+	SlurmConfig            batchsystem.SlurmConfig
+	HostName               string
 }
 
 func LogSimParameters(inputParameters inputs.SimInputIteration) string {
@@ -51,12 +55,16 @@ func NewSimulation(
 	simID int,
 	inputParameters inputs.SimInputIteration,
 	logger *log.Logger,
+	slurmConfig batchsystem.SlurmConfig,
+	hostName string,
 ) *Simulation {
 	return &Simulation{
 		JobNumber:       simID,
 		JobSubmission:   *jobSubmission,
 		InputParameters: inputParameters,
 		Logger:          logger,
+		SlurmConfig:     slurmConfig,
+		HostName:        hostName,
 	}
 }
 
@@ -69,6 +77,7 @@ func (simulation *Simulation) SetWorkingDir() {
 }
 
 func (simulation *Simulation) Run() {
+	time.Sleep(time.Second * time.Duration(simulation.JobNumber) / 2)
 	simulation.Logger.LogSimulation(simulation.LogValue(), "Running Simulation")
 	simulation.SetWorkingDir()
 	simulation.CreateSimulationDirectory()
@@ -97,6 +106,7 @@ func (simulation *Simulation) CreateSimulationDirectory() {
 		simulation.Logger.Error("Error Creating simulation directory", err)
 		simError.SimError()
 	}
+	time.Sleep(time.Second)
 }
 
 func (simulation *Simulation) CopySimulationFiles() {
@@ -113,6 +123,7 @@ func (simulation *Simulation) CopySimulationFiles() {
 		simulation.JobSubmission.WorkingDir+"/"+simulation.JobSubmission.JavaMacro,
 		simulation.JobDir+"/"+simulation.JobSubmission.JavaMacro,
 	)
+	time.Sleep(time.Second)
 }
 
 func (simulation *Simulation) CreateSimulationInputFile() {
@@ -128,17 +139,27 @@ func (simulation *Simulation) CreateSimulationInputFile() {
 	utils.WriteParameterCsvHeader(simulation.InputParameters.Name, inputFile)
 	utils.WriteSimulationInputCSV(simulation.InputParameters.Value, inputFile)
 	inputFile.Close()
+	time.Sleep(time.Second)
 }
 
 func (simulation *Simulation) CreateJobScript() {
 	simulation.Logger.LogSimulation(simulation.LogValue(), "Creating Job Script")
-	jobscript.GenerateJobScript(simulation.JobSubmission, simulation.JobNumber)
+	jobscript.GenerateJobScript(
+		simulation.JobSubmission,
+		simulation.JobNumber,
+		simulation.InputParameters,
+		simulation.SlurmConfig,
+		simulation.HostName,
+	)
+	time.Sleep(time.Second)
 }
 
 func (simulation *Simulation) RunSimulation() {
 	// exec job script
 	simulation.Logger.LogSimulation(simulation.LogValue(), "Starting StarCCM+")
+
 	cmd := exec.Command(simulation.JobDir + "/sim_" + fmt.Sprint(simulation.JobNumber) + ".sh")
+	// cmd := exec.Command("sbatch", simulation.JobDir+"sim_"+fmt.Sprint(simulation.JobNumber)+".sh")
 	_, err := cmd.CombinedOutput()
 	if err != nil {
 		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
