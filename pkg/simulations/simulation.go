@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -85,7 +86,14 @@ func (simulation *Simulation) Run() {
 	simulation.CreateSimulationInputFile()
 	simulation.CreateJobScript()
 	simulation.RunSimulation()
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	simulation.Logger.LogSimulation(
+		simulation.LogValue(),
+		fmt.Sprintf("Alloc = %v MiB\n", m.Alloc/1024/1024),
+	)
 	simulation.Logger.LogSimulation(simulation.LogValue(), "Finished running simulation\n\n")
+
 	// simulation.DesignObjectiveResults = simulation.RunSimulation()
 }
 

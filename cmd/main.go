@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/pprof"
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/designmanager"
@@ -12,6 +13,10 @@ import (
 )
 
 func main() {
+	// memory profile
+	f, _ := os.Create("memprofile.prof")
+	pprof.WriteHeapProfile(f)
+	defer f.Close()
 	// creat logger
 	logger := log.NewLogger(0, "DM", "#941ff4") // Parse command line arguments
 

@@ -2,6 +2,7 @@ package genetic
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
 
@@ -32,6 +33,43 @@ func (p Population) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
+func Normalize(population Population) Population {
+	minValues := make(map[string]float64)
+	maxValues := make(map[string]float64)
+
+	for _, individual := range population {
+		for objective, value := range individual.Sim.DesignObjectiveResults {
+			if _, exists := minValues[objective]; !exists {
+				minValues[objective] = math.Inf(1)
+				maxValues[objective] = math.Inf(-1)
+			}
+			if value < minValues[objective] {
+				minValues[objective] = value
+			}
+			if value > maxValues[objective] {
+				maxValues[objective] = value
+			}
+		}
+	}
+	for i := range population {
+		for objective, value := range population[i].Sim.DesignObjectiveResults {
+			min := minValues[objective]
+			max := maxValues[objective]
+
+			// If min == max, assign a normalized value of 0.5 (or handle as appropriate)
+			if min == max {
+				population[i].Sim.DesignObjectiveResults[objective] = 0.5
+			} else {
+				// Normalize between 0 and 1
+				normalized := (value - min) / (max - min)
+				population[i].Sim.DesignObjectiveResults[objective] = normalized
+			}
+		}
+	}
+
+	return population
+}
+
 func SampleInputs(inputConfig config.DesignStudyConfig) inputs.SimInputIteration {
 	inputIteration := inputs.SimInputIteration{
 		Name:  make([]string, len(inputConfig.DesignParameters)),
@@ -59,10 +97,12 @@ func CalculateFitness(individual *Individual, dsc config.DesignStudyConfig) {
 }
 
 func Evaluate(population Population, dsc config.DesignStudyConfig) Population {
+	population = Normalize(population)
 	for i := range population {
 		CalculateFitness(&population[i], dsc)
 		fmt.Printf("Sim: %d, Fitness: %f\n", population[i].Sim.JobNumber, population[i].Fitness)
 	}
+	fmt.Printf("\n")
 
 	sort.Sort(population)
 	for _, p := range population {
@@ -88,7 +128,7 @@ func InitializePopulation(size int, dmConfig config.ConfigFile) Population {
 		)
 		individual := Individual{
 			Sim:     sim,
-			Fitness: 1.0,
+			Fitness: 0.0,
 		}
 		population[i] = individual
 	}

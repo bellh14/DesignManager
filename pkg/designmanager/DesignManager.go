@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"runtime/pprof"
 	"strconv"
 	"strings"
 	"sync"
@@ -165,11 +166,11 @@ func (dm *DesignManager) HandlePareto() {
 				jobs <- 1
 				newDM := dm
 				go func(i int) {
+					defer wg.Done()
 					newDM.HandleSim(population[i].Sim)
 					<-jobs
 					dm.SimResultParams = newDM.SimResultParams
 					dm.SimResults = append(dm.SimResults, newDM.SimResults...)
-					defer wg.Done()
 				}(i)
 			}
 			wg.Wait()
@@ -191,6 +192,9 @@ func (dm *DesignManager) HandlePareto() {
 			}
 			continue
 		}
+		f, _ := os.Create(fmt.Sprintf("memprofile_%d.prof", generation))
+		pprof.WriteHeapProfile(f)
+		defer f.Close()
 		newPopulation := make(genetic.Population, 0, numSimsPerGeneration)
 		i := 1
 		for len(newPopulation) < numSimsPerGeneration {
@@ -200,7 +204,7 @@ func (dm *DesignManager) HandlePareto() {
 			// create sim for child
 			jobSubmission := jobscript.CreateJobSubmission(dm.ConfigFile)
 			simInputs := genetic.SampleInputs(dsc) // temp until crossover and mutate
-			simNum := (generation * numSimsPerGeneration) + i
+			simNum := (generation * numSimsPerGeneration) + i - 1
 			simLogger := log.NewLogger(0, fmt.Sprintf("Simulation: %d", simNum), "63")
 			sim := simulations.NewSimulation(
 				&jobSubmission,
@@ -222,6 +226,7 @@ func (dm *DesignManager) HandlePareto() {
 
 			i += 1
 		}
+		population = nil
 
 		jobs := make(chan int, numSimsPerGeneration)
 		wg := sync.WaitGroup{}
@@ -231,11 +236,11 @@ func (dm *DesignManager) HandlePareto() {
 			jobs <- 1
 			newDM := dm
 			go func(i int) {
+				defer wg.Done()
 				newDM.HandleSim(newPopulation[i].Sim)
 				<-jobs
 				dm.SimResultParams = newDM.SimResultParams
 				dm.SimResults = append(dm.SimResults, newDM.SimResults...)
-				defer wg.Done()
 			}(i)
 
 		}
