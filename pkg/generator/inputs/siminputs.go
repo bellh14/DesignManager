@@ -9,6 +9,7 @@ import (
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/utils"
+	extraMath "github.com/bellh14/DesignManager/pkg/utils/math"
 )
 
 type SimInput struct {
@@ -32,15 +33,18 @@ type StudyInput struct {
 type SimInputGenerator struct {
 	SimInputsFileName string
 	DesignParameters  []config.DesignParameter
+	TotalNumSims      int
 }
 
 func NewSimInputGenerator(
 	designParameters []config.DesignParameter,
 	fileName string,
+	totalNumSims int,
 ) *SimInputGenerator {
 	return &SimInputGenerator{
 		SimInputsFileName: fileName,
 		DesignParameters:  designParameters,
+		TotalNumSims:      totalNumSims,
 	}
 }
 
@@ -48,7 +52,19 @@ func CalculateStep(min float64, max float64, numSims int) float64 {
 	if min == max {
 		return 0
 	}
-	return (math.Abs(min) + math.Abs(max)) / float64(numSims-1)
+	var step float64
+	if min > 0 && numSims <= 2 {
+		step = (max - min)
+	} else if min > 0 && numSims > 2 {
+		step = (max - min) / float64(numSims-1)
+	} else if max < 0 && numSims <= 2 {
+		step = math.Abs(min) - math.Abs(max)
+	} else if max < 0 && numSims > 2 {
+		step = (math.Abs(min) - math.Abs(max)) / float64(numSims-1)
+	} else { // min < 0, max > 0
+		step = (math.Abs(min) + math.Abs(max)) / float64(numSims-1)
+	}
+	return step
 }
 
 func GenerateSimInputs(designParameters []config.DesignParameter) []SimInput {
@@ -65,7 +81,30 @@ func GenerateSimInputs(designParameters []config.DesignParameter) []SimInput {
 	return simInputs
 }
 
-func GenerateStudyInputs(simInputs []SimInput) StudyInput {
+// Generates all input values for given parameter
+func GenerateValues(simInput SimInput) []float64 {
+	var values []float64
+
+	for val := simInput.Min; val < simInput.Max || extraMath.AlmostEqual(val, simInput.Max); val += simInput.Step {
+		val = extraMath.RoundToDecimalPlaces(val, 4)
+		values = append(values, val)
+	}
+	return values
+}
+
+func CombineCombinations(combinations [][]float64, newValues []float64) [][]float64 {
+	var newCombinations [][]float64
+	for _, combination := range combinations {
+		for _, newValue := range newValues {
+			newCombination := append([]float64{}, combination...)
+			newCombination = append(newCombination, newValue)
+			newCombinations = append(newCombinations, newCombination)
+		}
+	}
+	return newCombinations
+}
+
+func GenerateStudyInputs(simInputs []SimInput, numSims int) StudyInput {
 	var studyInputs StudyInput
 	numParams := len(simInputs)
 	if numParams == 0 {
@@ -73,18 +112,34 @@ func GenerateStudyInputs(simInputs []SimInput) StudyInput {
 	}
 
 	// Assuming all SimInput have the same NumSims for simplicity
-	numSims := simInputs[0].NumSims
-	studyInputs.SimInputSamples = make([][]float64, numSims)
-	for i := range studyInputs.SimInputSamples {
-		studyInputs.SimInputSamples[i] = make([]float64, numParams)
+	// numSims = simInputs[0].NumSims
+	// for i := range studyInputs.SimInputSamples {
+	// 	studyInputs.SimInputSamples[i] = make([]float64, numParams)
+	// }
+
+	initialValues := GenerateValues(simInputs[0])
+	studyInputs.SimInputSamples = make([][]float64, len(initialValues))
+
+	studyInputs.SimInputNames = append(studyInputs.SimInputNames, simInputs[0].Name)
+	for i, val := range initialValues {
+		studyInputs.SimInputSamples[i] = []float64{val}
 	}
 
-	for i, si := range simInputs {
-		studyInputs.SimInputNames = append(studyInputs.SimInputNames, si.Name)
-		for j := 0; j < si.NumSims; j++ {
-			studyInputs.SimInputSamples[j][i] = si.Min + float64(j)*si.Step
-		}
+	for i := 1; i < len(simInputs); i++ {
+		studyInputs.SimInputNames = append(studyInputs.SimInputNames, simInputs[i].Name)
+		studyInputs.SimInputSamples = CombineCombinations(
+			studyInputs.SimInputSamples,
+			GenerateValues(simInputs[i]),
+		)
 	}
+	//
+	// for i, si := range simInputs {
+	// 	studyInputs.SimInputNames = append(studyInputs.SimInputNames, si.Name)
+	// 	for j := 0; j < si.NumSims; j++ {
+	// 		logger.Debug(fmt.Sprintf("i: %d, j: %d", i, j))
+	// 		studyInputs.SimInputSamples[j][i] = si.Min + float64(j)*si.Step
+	// 	}
+	// }
 
 	return studyInputs
 }
@@ -102,8 +157,9 @@ func GenerateSimInputCSV(studyInput StudyInput, fileName string) error {
 }
 
 func (simInputGenerator *SimInputGenerator) HandleSimInputs() error {
+	// pathetic why did I write these seperate, am confused now but will fix later
 	simInputs := GenerateSimInputs(simInputGenerator.DesignParameters)
-	studyInputs := GenerateStudyInputs(simInputs)
+	studyInputs := GenerateStudyInputs(simInputs, simInputGenerator.TotalNumSims)
 	err := GenerateSimInputCSV(studyInputs, simInputGenerator.SimInputsFileName)
 	if err != nil {
 		return err
@@ -128,7 +184,7 @@ func (simInputGenerator *SimInputGenerator) SimInputByJobNumber(
 	}
 
 	if jobNumber > len(records)-1 {
-		return simInputIteration, fmt.Errorf("Job number %d is out of range", jobNumber)
+		return simInputIteration, fmt.Errorf("job number %d is out of range", jobNumber)
 	}
 
 	for i, record := range records {

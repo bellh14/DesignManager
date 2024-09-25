@@ -4,10 +4,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/bellh14/DesignManager/config"
+	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
 	"github.com/bellh14/DesignManager/pkg/simulations"
-	"github.com/bellh14/DesignManager/pkg/types"
+	"github.com/bellh14/DesignManager/pkg/utils/log"
 )
 
 func TestHandleSimulation(t *testing.T) {
@@ -31,37 +33,56 @@ func TestHandleSimulation(t *testing.T) {
 
 func testCreateNewSimulation(t *testing.T) *simulations.Simulation {
 	t.Helper()
+	slurmInputs := batchsystem.SlurmConfig{
+		WorkingDir: "../../../test/testoutput/",
+		JobName:    "testjob",
+		Nodes:      1,
+		Ntasks:     4,
+		Partition:  "icx",
+		WallTime:   "24:00:00",
+		Email:      "test@gmail.com",
+		MailType:   "all",
+		OutputFile: "output.txt",
+		ErrorFile:  "error.txt",
+	}
 	jobSubmission := jobscript.JobSubmission{
-		WorkingDir: "../../test/testoutput",
-		Ntasks:     80,
-		StarPath:   "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin",
-		PodKey:     "1234-5678-9012-3456",
-		JavaMacro:  "AirfoilAOA.java",
-		SimFile:    "testsim.sim",
+		WorkingDir:     "../../test/testoutput",
+		Ntasks:         80,
+		StarPath:       "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin",
+		PodKey:         "1234-5678-9012-3456",
+		JavaMacro:      "AirfoilAOA.java",
+		SimFile:        "testsim.sim",
+		StarWorkingDir: "../../test/testoutput",
 	}
 
-	designParameters := []types.DesignParameter{
+	designParameters := []config.DesignParameter{
 		{
 			Name:    "Parameter1",
 			Min:     -1.3,
 			Max:     1.3,
-			NumSims: 9,
+			NumSims: 3,
 		},
 		{
 			Name:    "Parameter2",
 			Min:     -1.3,
 			Max:     1.3,
-			NumSims: 9,
+			NumSims: 3,
 		},
 	}
 	inputFileName := jobSubmission.WorkingDir + "/" + "testInputs.csv"
-	inputGenerator := inputs.NewSimInputGenerator(designParameters, inputFileName)
+	inputGenerator := inputs.NewSimInputGenerator(
+		designParameters,
+		inputFileName,
+		designParameters[0].NumSims,
+	)
 	inputGenerator.HandleSimInputs()
 	inputs, err := inputGenerator.SimInputByJobNumber(1)
 	if err != nil {
 		t.Errorf("Error obtaining siminput by job number %s", err)
 	}
-	return simulations.NewSimulation(&jobSubmission, 1, inputs)
+	logger := log.NewLogger(0, "Simulation Test", "63")
+	hostName := "c410-043.host.system.com"
+	return simulations.NewSimulation(&jobSubmission, 1, inputs, logger, slurmInputs, hostName)
 }
 
 func testSetWorkingDir(t *testing.T, sim *simulations.Simulation) {

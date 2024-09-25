@@ -18,7 +18,8 @@
     "StarPath": "/opt/Siemens/17.04.008-R8/STAR-CCM+17.04.008-R8/star/bin/",
     "PodKey": "<podkey>",
     "JavaMacro": "macro.java",
-    "SimFile": "simfile.sim"
+    "SimFile": "simfile.sim",
+    "StarWorkingDir": "../../test/testoutput"
   },
   "DesignStudyConfig": {
     "StudyType": "Sweep",

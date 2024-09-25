@@ -19,5 +19,5 @@ func TestGenerateSlurmScript(t *testing.T) {
 		OutputFile: "output.txt",
 		ErrorFile:  "error.txt",
 	}
-	batchsystem.GenerateSlurmScript(slurmInputs)
+	batchsystem.GenerateSlurmScript(slurmInputs, "configfile")
 }

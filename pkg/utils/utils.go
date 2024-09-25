@@ -12,8 +12,6 @@ import (
 	"reflect"
 	"strconv"
 	"time"
-
-	"github.com/bellh14/DesignManager/pkg/types"
 )
 
 func PrettyPrint(i interface{}) string {
@@ -22,7 +20,7 @@ func PrettyPrint(i interface{}) string {
 }
 
 func WriteBashVariable(file *os.File, name string, value any) {
-	_, err := file.WriteString(fmt.Sprintf("%s=%v\n", name, value))
+	_, err := fmt.Fprintf(file, "%s=%v\n", name, value)
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
@@ -144,13 +142,17 @@ func WriteSimulationInputCSV(values []float64, file *os.File) {
 	}
 }
 
-func CreateJobSubmission(systemResources types.SystemResourcesType, workingDir string, starCCM types.StarCCM) types.JobSubmissionType {
-	return types.JobSubmissionType{
-		WorkingDir: workingDir,
-		Ntasks:     systemResources.Ntasks,
-		StarPath:   starCCM.StarPath,
-		PodKey:     starCCM.PodKey,
-		JavaMacro:  starCCM.JavaMacro,
-		SimFile:    starCCM.SimFile,
+func ConvertStringSliceToFloat(strValues []string) ([]float64, error) {
+	floatValues := make([]float64, len(strValues))
+	for i, value := range strValues {
+		if value == "" {
+			continue
+		}
+		floatValue, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return nil, err
+		}
+		floatValues[i] = floatValue
 	}
+	return floatValues, nil
 }

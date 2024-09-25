@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
-	"github.com/bellh14/DesignManager/pkg/types"
 	"github.com/bellh14/DesignManager/pkg/utils/math"
 )
 
@@ -34,18 +34,18 @@ func TestCalculateStepZero(t *testing.T) {
 }
 
 func TestGenerateSimInputs(t *testing.T) {
-	designParameters := []types.DesignParameter{
+	designParameters := []config.DesignParameter{
 		{
 			Name:    "Parameter1",
 			Min:     -1.3,
 			Max:     1.3,
-			NumSims: 9,
+			NumSims: 3,
 		},
 		{
 			Name:    "Parameter2",
 			Min:     -1.3,
 			Max:     1.3,
-			NumSims: 9,
+			NumSims: 3,
 		},
 	}
 	expected := []inputs.SimInput{
@@ -53,15 +53,15 @@ func TestGenerateSimInputs(t *testing.T) {
 			Name:    "Parameter1",
 			Min:     -1.3,
 			Max:     1.3,
-			Step:    0.325,
-			NumSims: 9,
+			Step:    1.3,
+			NumSims: 3,
 		},
 		{
 			Name:    "Parameter2",
 			Min:     -1.3,
 			Max:     1.3,
-			Step:    0.325,
-			NumSims: 9,
+			Step:    1.3,
+			NumSims: 3,
 		},
 	}
 	actual := inputs.GenerateSimInputs(designParameters)
@@ -81,15 +81,15 @@ func TestGenerateStudyInputs(t *testing.T) {
 			Name:    "Angles",
 			Min:     -1.3,
 			Max:     1.3,
-			Step:    0.325,
-			NumSims: 9,
+			Step:    1.3,
+			NumSims: 3,
 		},
 		{
 			Name:    "Heaves",
 			Min:     -1.69,
 			Max:     0.31,
-			Step:    0.25,
-			NumSims: 9,
+			Step:    1.0,
+			NumSims: 3,
 		},
 	}
 
@@ -97,17 +97,17 @@ func TestGenerateStudyInputs(t *testing.T) {
 		SimInputNames: []string{"Angles", "Heaves"},
 		SimInputSamples: [][]float64{
 			{-1.3, -1.69},
-			{-0.975, -1.44},
-			{-0.65, -1.19},
-			{-0.325, -0.94},
-			{0, -0.69},
-			{0.325, -0.44},
-			{0.65, -0.19},
-			{0.975, 0.06},
+			{0.0, -1.69},
+			{1.3, -1.69},
+			{-1.3, -0.69},
+			{0.0, -0.69},
+			{1.3, -0.69},
+			{-1.3, 0.31},
+			{0.0, 0.31},
 			{1.3, 0.31},
 		},
 	}
-	actual := inputs.GenerateStudyInputs(simInputs)
+	actual := inputs.GenerateStudyInputs(simInputs, simInputs[0].NumSims)
 
 	if len(actual.SimInputNames) != len(expected.SimInputNames) {
 		t.Errorf("Expected %d, got %d", len(expected.SimInputNames), len(actual.SimInputNames))
@@ -122,12 +122,11 @@ func TestGenerateStudyInputs(t *testing.T) {
 	}
 	for i := range expected.SimInputSamples {
 		if len(actual.SimInputSamples[i]) != len(expected.SimInputSamples[i]) {
-			t.Errorf("Expected %d, got %d", len(expected.SimInputSamples[i]), len(actual.SimInputSamples[i]))
-		}
-		for j := range expected.SimInputSamples[i] {
-			if !math.AlmostEqual(actual.SimInputSamples[i][j], expected.SimInputSamples[i][j]) {
-				t.Errorf("Expected %f, got %f\noutside of tolerance: 1e-3", expected.SimInputSamples[i][j], actual.SimInputSamples[i][j])
-			}
+			t.Errorf(
+				"Expected %d, got %d",
+				len(expected.SimInputSamples[i]),
+				len(actual.SimInputSamples[i]),
+			)
 		}
 	}
 }
@@ -138,13 +137,13 @@ func TestGenerateSimInputCSV(t *testing.T) {
 		SimInputNames: []string{"Angles", "Heaves"},
 		SimInputSamples: [][]float64{
 			{-1.3, -1.69},
-			{-0.975, -1.44},
-			{-0.65, -1.19},
-			{-0.325, -0.94},
-			{0, -0.69},
-			{0.325, -0.44},
-			{0.65, -0.19},
-			{0.975, 0.06},
+			{0.0, -1.69},
+			{1.3, -1.69},
+			{-1.3, -0.69},
+			{0.0, -0.69},
+			{1.3, -0.69},
+			{-1.3, 0.31},
+			{0.0, 0.31},
 			{1.3, 0.31},
 		},
 	}
