@@ -62,7 +62,7 @@ func (dm *DesignManager) HandleAeroMap() {
 		newDM := dm
 		go func(i int) {
 			inputOffset := i * offset
-			newDM.HandleSweep(inputOffset, offset)
+			newDM.HandleSweep(inputOffset, offset, i)
 			<-jobs
 			// should really lock these...
 			// in practice the sweeps will never end close enough to cause an issue
@@ -94,7 +94,7 @@ func (dm *DesignManager) HandleInputs() {
 	}
 }
 
-func (dm *DesignManager) HandleSweep(offset int, numSims int) {
+func (dm *DesignManager) HandleSweep(offset int, numSims int, hostIndex int) {
 	jobSubmission := jobscript.CreateJobSubmission(dm.ConfigFile)
 
 	for i := 1; i <= numSims; i++ {
@@ -119,7 +119,7 @@ func (dm *DesignManager) HandleSweep(offset int, numSims int) {
 			inputs,
 			simLogger,
 			dm.ConfigFile.SlurmConfig,
-			dm.ConfigFile.SlurmConfig.NodeList[i],
+			dm.ConfigFile.SlurmConfig.NodeList[hostIndex],
 		)
 		sim.Run()
 		simParams, simResults := sim.ParseSimulationResults()
@@ -287,7 +287,7 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 		dm.Logger.Log("Running Pareto Study")
 	case "Sweep":
 		dm.Logger.Log("Running design sweep")
-		dm.HandleSweep(0, dm.ConfigFile.DesignStudyConfig.NumSims)
+		dm.HandleSweep(0, dm.ConfigFile.DesignStudyConfig.NumSims, 0)
 	default:
 		fmt.Println("Error: Study type not supported")
 		os.Exit(1)

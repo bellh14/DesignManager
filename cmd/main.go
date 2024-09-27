@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/pprof"
+	"strconv"
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/designmanager"
@@ -23,6 +24,7 @@ func main() {
 	inputFile := flag.String("config", "", "Input file")
 	batchSystemFlag := flag.String("bs", "", "batch system (only supports slurm right now)")
 	slurmNodeList := flag.String("slurmNodeList", "", "List of slurm nodes allocated")
+	nodesPerSim := flag.String("nps", "", "Number of nodes per sim if more than 1")
 	flag.Parse()
 
 	if *inputFile == "" {
@@ -54,7 +56,11 @@ func main() {
 		logger.Log("Allocating on slurm nodes: " + *slurmNodeList)
 		nodes, err := batchsystem.ParseNodeList(*slurmNodeList, config.SlurmConfig.HostName)
 		if len(nodes) == 0 {
-			nodes = append(nodes, *slurmNodeList+"."+config.SlurmConfig.HostName)
+			if config.SlurmConfig.HostName == "" {
+				nodes = append(nodes, *slurmNodeList)
+			} else {
+				nodes = append(nodes, *slurmNodeList+"."+config.SlurmConfig.HostName)
+			}
 		}
 		if err != nil {
 			logger.Fatal("Unable to parse slurm node list", err)
@@ -62,10 +68,25 @@ func main() {
 		for _, node := range nodes {
 			logger.Log(node)
 		}
-		simsPerNode := (config.SlurmConfig.Ntasks / config.SlurmConfig.Nodes) / config.DesignStudyConfig.NtasksPerSim
+		simsPerNode := 1
+		if *nodesPerSim == "" {
+			simsPerNode = (config.SlurmConfig.Ntasks / config.SlurmConfig.Nodes) / config.DesignStudyConfig.NtasksPerSim
+		}
 		fullNodeList := batchsystem.DuplicateNodes(nodes, simsPerNode)
 
 		config.SlurmConfig.NodeList = fullNodeList
+	}
+
+	if *nodesPerSim != "" {
+		nps, err := strconv.Atoi(*nodesPerSim)
+		if err != nil {
+			logger.Fatal("Invalid nodes per sim, needs to be an integer", err)
+		}
+		logger.Log(fmt.Sprintf("Running each sim with %d nodes", nps))
+		fullNodeList := batchsystem.AllocateMultiNodes(config.SlurmConfig.NodeList, nps)
+
+		config.SlurmConfig.NodeList = fullNodeList
+		config.DesignStudyConfig.NtasksPerNode = config.DesignStudyConfig.NtasksPerSim / nps
 	}
 
 	// Create design manager

@@ -53,6 +53,7 @@ type DesignStudyConfig struct {
 	OptimizationAlgorithm string            `json:"OptimizationAlgorithm"`
 	DesignParameters      []DesignParameter `json:"DesignParameters"`
 	DesignObjectives      []DesignObjective `json:"DesignObjectives"`
+	NtasksPerNode         int
 }
 
 type ConfigFile struct {
