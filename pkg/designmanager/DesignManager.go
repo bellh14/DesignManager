@@ -44,7 +44,7 @@ func (dm *DesignManager) Run() {
 		dm.HandleInputs()
 	}
 	dm.HandleDesignStudy(dm.ConfigFile.DesignStudyConfig.StudyType)
-	dm.SaveCompiledResults()
+	dm.SaveCompiledResults("")
 }
 
 func (dm *DesignManager) HandleAeroMap() {
@@ -54,6 +54,7 @@ func (dm *DesignManager) HandleAeroMap() {
 	// buffered channel 2nd param is for number of sweeps to run in parallel
 	jobs := make(chan int, numberOfSweeps)
 	wg := sync.WaitGroup{}
+	var mu sync.Mutex
 
 	// start sweeps
 	for i := range numberOfSweeps {
@@ -62,12 +63,12 @@ func (dm *DesignManager) HandleAeroMap() {
 		newDM := dm
 		go func(i int) {
 			inputOffset := i * offset
-			newDM.HandleSweep(inputOffset, offset)
+			newDM.HandleSweep(inputOffset, offset, i)
 			<-jobs
-			// should really lock these...
-			// in practice the sweeps will never end close enough to cause an issue
+			mu.Lock()
 			dm.SimResultParams = newDM.SimResultParams
 			dm.SimResults = append(dm.SimResults, newDM.SimResults...)
+			mu.Unlock()
 			defer wg.Done()
 		}(i)
 
@@ -94,7 +95,7 @@ func (dm *DesignManager) HandleInputs() {
 	}
 }
 
-func (dm *DesignManager) HandleSweep(offset int, numSims int) {
+func (dm *DesignManager) HandleSweep(offset int, numSims int, hostIndex int) {
 	jobSubmission := jobscript.CreateJobSubmission(dm.ConfigFile)
 
 	for i := 1; i <= numSims; i++ {
@@ -119,7 +120,7 @@ func (dm *DesignManager) HandleSweep(offset int, numSims int) {
 			inputs,
 			simLogger,
 			dm.ConfigFile.SlurmConfig,
-			dm.ConfigFile.SlurmConfig.NodeList[i],
+			dm.ConfigFile.SlurmConfig.NodeList[hostIndex],
 		)
 		sim.Run()
 		simParams, simResults := sim.ParseSimulationResults()
@@ -155,6 +156,8 @@ func (dm *DesignManager) HandlePareto() {
 	dm.Logger.Log("Initializing the population")
 	population := genetic.InitializePopulation(numSimsPerGeneration, dm.ConfigFile)
 
+	var mu sync.Mutex
+
 	for generation := 0; generation < mooConfig.NumGenerations; generation++ {
 		dm.Logger.Log(fmt.Sprintf("Starting Generation: %d\n", generation))
 		if generation == 0 {
@@ -169,8 +172,10 @@ func (dm *DesignManager) HandlePareto() {
 					defer wg.Done()
 					newDM.HandleSim(population[i].Sim)
 					<-jobs
+					mu.Lock()
 					dm.SimResultParams = newDM.SimResultParams
 					dm.SimResults = append(dm.SimResults, newDM.SimResults...)
+					mu.Unlock()
 				}(i)
 			}
 			wg.Wait()
@@ -190,6 +195,15 @@ func (dm *DesignManager) HandlePareto() {
 					),
 				)
 			}
+			dm.Logger.Log("Saving compiled generation results")
+			dm.SaveCompiledResults(
+				fmt.Sprintf(
+					"Gen_%d_sim_%s",
+					generation,
+					strings.TrimSuffix(dm.ConfigFile.StarCCM.SimFile, ".sim"),
+				),
+			)
+
 			continue
 		}
 		f, _ := os.Create(fmt.Sprintf("memprofile_%d.prof", generation))
@@ -239,8 +253,10 @@ func (dm *DesignManager) HandlePareto() {
 				defer wg.Done()
 				newDM.HandleSim(newPopulation[i].Sim)
 				<-jobs
+				mu.Lock()
 				dm.SimResultParams = newDM.SimResultParams
 				dm.SimResults = append(dm.SimResults, newDM.SimResults...)
+				mu.Unlock()
 			}(i)
 
 		}
@@ -262,7 +278,20 @@ func (dm *DesignManager) HandlePareto() {
 			)
 		}
 
+		dm.Logger.Log("Saving compiled generation results")
+		dm.SaveCompiledResults(
+			fmt.Sprintf(
+				"Gen_%d_sim_%s",
+				generation,
+				strings.TrimSuffix(dm.ConfigFile.StarCCM.SimFile, ".sim"),
+			),
+		)
+
 		population = newPopulation
+
+		// clear slices
+		dm.SimResults = nil
+		dm.SimResultParams = nil
 	}
 	dm.Logger.Log("Finished running last generation\n\nFinal Population:")
 	for _, ind := range population {
@@ -287,16 +316,18 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 		dm.Logger.Log("Running Pareto Study")
 	case "Sweep":
 		dm.Logger.Log("Running design sweep")
-		dm.HandleSweep(0, dm.ConfigFile.DesignStudyConfig.NumSims)
+		dm.HandleSweep(0, dm.ConfigFile.DesignStudyConfig.NumSims, 0)
 	default:
 		fmt.Println("Error: Study type not supported")
 		os.Exit(1)
 	}
 }
 
-func (dm *DesignManager) SaveCompiledResults() {
-	simName := strings.TrimSuffix(dm.ConfigFile.StarCCM.SimFile, ".sim")
-	resultsFile, err := os.Create("Compiled_" + simName + "_Report.csv")
+func (dm *DesignManager) SaveCompiledResults(fileName string) {
+	if fileName != "" {
+		fileName = strings.TrimSuffix(dm.ConfigFile.StarCCM.SimFile, ".sim")
+	}
+	resultsFile, err := os.Create("Compiled_" + fileName + "_Report.csv")
 	if err != nil {
 		dm.Logger.Error("Failed to create results file", err)
 	}

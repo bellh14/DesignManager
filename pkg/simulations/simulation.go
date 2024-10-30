@@ -27,7 +27,8 @@ type Simulation struct {
 	DesignObjectiveResults map[string]float64
 	Logger                 *log.Logger
 	SlurmConfig            batchsystem.SlurmConfig
-	HostName               string
+	MachineFile            string
+	HostNodes              string
 }
 
 func LogSimParameters(inputParameters inputs.SimInputIteration) string {
@@ -57,7 +58,7 @@ func NewSimulation(
 	inputParameters inputs.SimInputIteration,
 	logger *log.Logger,
 	slurmConfig batchsystem.SlurmConfig,
-	hostName string,
+	hostNodes string,
 ) *Simulation {
 	return &Simulation{
 		JobNumber:       simID,
@@ -65,7 +66,7 @@ func NewSimulation(
 		InputParameters: inputParameters,
 		Logger:          logger,
 		SlurmConfig:     slurmConfig,
-		HostName:        hostName,
+		HostNodes:       hostNodes,
 	}
 }
 
@@ -84,6 +85,7 @@ func (simulation *Simulation) Run() {
 	simulation.CreateSimulationDirectory()
 	simulation.CopySimulationFiles()
 	simulation.CreateSimulationInputFile()
+	simulation.CreateSimulationMachineFile()
 	simulation.CreateJobScript()
 	simulation.RunSimulation()
 	var m runtime.MemStats
@@ -141,12 +143,28 @@ func (simulation *Simulation) CreateSimulationInputFile() {
 	if err != nil {
 		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
 		simError.SimError()
-		simulation.Logger.Error("Failed to created input csv", err)
+		simulation.Logger.Error("Failed to create input csv", err)
 	}
 	defer inputFile.Close()
 	utils.WriteParameterCsvHeader(simulation.InputParameters.Name, inputFile)
 	utils.WriteSimulationInputCSV(simulation.InputParameters.Value, inputFile)
 	inputFile.Close()
+	time.Sleep(time.Second)
+}
+
+func (simulation *Simulation) CreateSimulationMachineFile() {
+	simulation.Logger.LogSimulation(simulation.LogValue(), "Creating machinefile")
+	simulation.MachineFile = fmt.Sprintf("%d.txt", simulation.JobNumber)
+	err := jobscript.CreateMachineFile(
+		fmt.Sprintf("%s/%s", simulation.JobDir, simulation.MachineFile),
+		simulation.HostNodes,
+		simulation.JobSubmission.NtasksPerNode,
+	)
+	if err != nil {
+		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
+		simError.SimError()
+		simulation.Logger.Error("Failed to create machine file", err)
+	}
 	time.Sleep(time.Second)
 }
 
@@ -157,7 +175,7 @@ func (simulation *Simulation) CreateJobScript() {
 		simulation.JobNumber,
 		simulation.InputParameters,
 		simulation.SlurmConfig,
-		simulation.HostName,
+		simulation.MachineFile,
 	)
 	time.Sleep(time.Second)
 }

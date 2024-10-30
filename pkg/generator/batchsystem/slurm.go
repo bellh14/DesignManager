@@ -93,7 +93,12 @@ func parseNodeRange(nodePrefix, rangePart string, hostName string) ([]string, er
 		if err != nil {
 			return nil, err
 		}
-		node := fmt.Sprintf("%s%03d.%s", nodePrefix, num, hostName)
+		node := ""
+		if hostName != "" {
+			node = fmt.Sprintf("%s%d.%s", nodePrefix, num, hostName)
+		} else {
+			node = fmt.Sprintf("%s%d", nodePrefix, num)
+		}
 		return []string{node}, nil
 	}
 
@@ -109,7 +114,12 @@ func parseNodeRange(nodePrefix, rangePart string, hostName string) ([]string, er
 	}
 	var nodes []string
 	for i := start; i <= end; i++ {
-		node := fmt.Sprintf("%s%03d.%s", nodePrefix, i, hostName)
+		node := ""
+		if hostName != "" {
+			node = fmt.Sprintf("%s%d.%s", nodePrefix, i, hostName)
+		} else {
+			node = fmt.Sprintf("%s%d", nodePrefix, i)
+		}
 		nodes = append(nodes, node)
 	}
 	return nodes, nil
@@ -151,4 +161,30 @@ func DuplicateNodes(nodes []string, simsPerNode int) []string {
 	}
 
 	return duplicateNodes
+}
+
+func AllocateMultiNodes(nodes []string, nodesPerSim int) []string {
+	var multiNodes []string
+
+	for i := 0; i < len(nodes); i += nodesPerSim {
+
+		end := i + nodesPerSim
+
+		if end >= len(nodes) {
+			end = len(nodes)
+		}
+		multiNode := ""
+		for j := i; j < end; j += 1 {
+			fmt.Println(nodes[j] + ",")
+			if j != end-1 {
+				multiNode += nodes[j] + ","
+			} else {
+				multiNode += nodes[j]
+			}
+		}
+
+		multiNodes = append(multiNodes, multiNode)
+		fmt.Println(multiNode)
+	}
+	return multiNodes
 }
