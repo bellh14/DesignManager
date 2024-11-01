@@ -52,7 +52,7 @@ func GenerateJobScript(
 	jobNumber int,
 	inputs inputs.SimInputIteration,
 	slurmConfig batchsystem.SlurmConfig,
-	machinefile string,
+	hostNodes string,
 ) {
 	paramString := CreateParamsString(inputs)
 
@@ -89,17 +89,17 @@ func GenerateJobScript(
 				// jobScriptInputs.Ntasks,
 				// coreOffset,
 				paramString,
-				machinefile,
+				hostNodes,
 			),
 		)
 	} else {
 		jobScript.WriteString(
 			fmt.Sprintf(
-				"$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -machinefile $WorkingDir/%s -time -batch-report > $WorkingDir/output.txt 2>&1",
+				"$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -on %s -time -batch-report > $WorkingDir/output.txt 2>&1",
 				// jobScriptInputs.Ntasks,
 				// coreOffset,
 				paramString,
-				machinefile,
+				hostNodes,
 			),
 		)
 	}

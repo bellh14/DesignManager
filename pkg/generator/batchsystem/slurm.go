@@ -95,7 +95,7 @@ func parseNodeRange(nodePrefix, rangePart string, hostName string) ([]string, er
 		}
 		node := ""
 		if hostName != "" {
-			node = fmt.Sprintf("%s%d.%s", nodePrefix, num, hostName)
+			node = fmt.Sprintf("%s-%03d.%s", nodePrefix, num, hostName)
 		} else {
 			node = fmt.Sprintf("%s%d", nodePrefix, num)
 		}
@@ -116,7 +116,7 @@ func parseNodeRange(nodePrefix, rangePart string, hostName string) ([]string, er
 	for i := start; i <= end; i++ {
 		node := ""
 		if hostName != "" {
-			node = fmt.Sprintf("%s%d.%s", nodePrefix, i, hostName)
+			node = fmt.Sprintf("%s-%03d.%s", nodePrefix, i, hostName)
 		} else {
 			node = fmt.Sprintf("%s%d", nodePrefix, i)
 		}
@@ -129,22 +129,26 @@ func ParseNodeList(slurmNodeList string, hostName string) ([]string, error) {
 	var allNodes []string
 
 	// "c519-[051-054,061-064,071-074,081-084]"
-	re := regexp.MustCompile(`([a-zA-Z0-9\-]+)\[(.*?)\]`)
+	re := regexp.MustCompile(`([a-zA-Z]+\d+)-\[(\d+-\d+(?:,\d+-\d+)*)\]|([a-zA-Z]+\d+-\d+)`)
 
 	matches := re.FindAllStringSubmatch(slurmNodeList, -1)
 
 	for _, match := range matches {
-		nodePrefix := match[1]
-		rangePart := match[2]
+		if match[3] != "" {
+			allNodes = append(allNodes, fmt.Sprintf("%s.%s", match[3], hostName))
+		} else if match[1] != "" && match[2] != "" {
+			nodePrefix := match[1]
+			rangePart := match[2]
 
-		ranges := strings.Split(rangePart, ",")
+			ranges := strings.Split(rangePart, ",")
 
-		for _, r := range ranges {
-			nodes, err := parseNodeRange(nodePrefix, r, hostName)
-			if err != nil {
-				return nil, err
+			for _, r := range ranges {
+				nodes, err := parseNodeRange(nodePrefix, r, hostName)
+				if err != nil {
+					return nil, err
+				}
+				allNodes = append(allNodes, nodes...)
 			}
-			allNodes = append(allNodes, nodes...)
 		}
 	}
 

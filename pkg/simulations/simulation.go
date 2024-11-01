@@ -85,7 +85,7 @@ func (simulation *Simulation) Run() {
 	simulation.CreateSimulationDirectory()
 	simulation.CopySimulationFiles()
 	simulation.CreateSimulationInputFile()
-	simulation.CreateSimulationMachineFile()
+	// simulation.CreateSimulationMachineFile()
 	simulation.CreateJobScript()
 	simulation.RunSimulation()
 	var m runtime.MemStats
@@ -175,7 +175,7 @@ func (simulation *Simulation) CreateJobScript() {
 		simulation.JobNumber,
 		simulation.InputParameters,
 		simulation.SlurmConfig,
-		simulation.MachineFile,
+		simulation.HostNodes,
 	)
 	time.Sleep(time.Second)
 }
