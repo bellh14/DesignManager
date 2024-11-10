@@ -156,12 +156,11 @@ func (dm *DesignManager) HandlePareto() {
 	dm.Logger.Log("Initializing the population")
 	population := genetic.InitializePopulation(numSimsPerGeneration, dm.ConfigFile)
 
-	var mu sync.Mutex
-
 	for generation := 0; generation < mooConfig.NumGenerations; generation++ {
 		dm.Logger.Log(fmt.Sprintf("Starting Generation: %d\n", generation))
 		if generation == 0 {
 			jobs := make(chan int, numSimsPerGeneration)
+			results := make(chan []float64, numSimsPerGeneration)
 			wg := sync.WaitGroup{}
 
 			for i := range numSimsPerGeneration {
@@ -172,15 +171,19 @@ func (dm *DesignManager) HandlePareto() {
 					defer wg.Done()
 					newDM.HandleSim(population[i].Sim)
 					<-jobs
-					mu.Lock()
 					dm.SimResultParams = newDM.SimResultParams
-					dm.SimResults = append(dm.SimResults, newDM.SimResults...)
-					mu.Unlock()
+					// dm.SimResults = append(dm.SimResults, newDM.SimResults...)
+					results <- newDM.SimResults[0]
 				}(i)
 			}
 			wg.Wait()
+			close(results)
 
 			dm.Logger.Log("Finished running generation 1")
+
+			for result := range results {
+				dm.SimResults = append(dm.SimResults, result)
+			}
 
 			dm.Logger.Log("Evaluating Best and sorting population")
 			population = genetic.Evaluate(population, dsc)
@@ -243,6 +246,7 @@ func (dm *DesignManager) HandlePareto() {
 		population = nil
 
 		jobs := make(chan int, numSimsPerGeneration)
+		results := make(chan []float64, numSimsPerGeneration)
 		wg := sync.WaitGroup{}
 
 		for i := range numSimsPerGeneration {
@@ -253,16 +257,20 @@ func (dm *DesignManager) HandlePareto() {
 				defer wg.Done()
 				newDM.HandleSim(newPopulation[i].Sim)
 				<-jobs
-				mu.Lock()
 				dm.SimResultParams = newDM.SimResultParams
-				dm.SimResults = append(dm.SimResults, newDM.SimResults...)
-				mu.Unlock()
+				// dm.SimResults = append(dm.SimResults, newDM.SimResults...)
+				results <- newDM.SimResults[0]
 			}(i)
 
 		}
 		wg.Wait()
+		close(results)
 
 		dm.Logger.Log(fmt.Sprintf("Finshed running generation: %d", generation))
+
+		for result := range results {
+			dm.SimResults = append(dm.SimResults, result)
+		}
 
 		dm.Logger.Log("Evaluating Best and sorting population")
 		newPopulation = genetic.Evaluate(newPopulation, dsc)
@@ -325,7 +333,7 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 
 func (dm *DesignManager) SaveCompiledResults(fileName string) {
 	if fileName != "" {
-		fileName = strings.TrimSuffix(dm.ConfigFile.StarCCM.SimFile, ".sim")
+		// fileName = strings.TrimSuffix(dm.ConfigFile.StarCCM.SimFile, ".sim")
 	}
 	resultsFile, err := os.Create("Compiled_" + fileName + "_Report.csv")
 	if err != nil {

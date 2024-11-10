@@ -129,7 +129,9 @@ func ParseNodeList(slurmNodeList string, hostName string) ([]string, error) {
 	var allNodes []string
 
 	// "c519-[051-054,061-064,071-074,081-084]"
-	re := regexp.MustCompile(`([a-zA-Z]+\d+)-\[(\d+-\d+(?:,\d+-\d+)*)\]|([a-zA-Z]+\d+-\d+)`)
+	re := regexp.MustCompile(
+		`([a-zA-Z]+\d+)-\[(\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*)\]|([a-zA-Z]+\d+-\d+)`,
+	)
 
 	matches := re.FindAllStringSubmatch(slurmNodeList, -1)
 
