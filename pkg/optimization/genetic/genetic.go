@@ -33,7 +33,7 @@ func (p Population) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
-func Normalize(population Population) Population {
+func Normalize(population Population, dsc config.DesignStudyConfig) Population {
 	minValues := make(map[string]float64)
 	maxValues := make(map[string]float64)
 
@@ -52,6 +52,7 @@ func Normalize(population Population) Population {
 		}
 	}
 	for i := range population {
+		j := 0
 		for objective, value := range population[i].Sim.DesignObjectiveResults {
 			min := minValues[objective]
 			max := maxValues[objective]
@@ -61,9 +62,15 @@ func Normalize(population Population) Population {
 				population[i].Sim.DesignObjectiveResults[objective] = 0.5
 			} else {
 				// Normalize between 0 and 1
-				normalized := (value - min) / (max - min)
+				normalized := 0.0
+				if dsc.DesignObjectives[j].Goal == "Maximize" {
+					normalized = (value - min) / (max - min)
+				} else {
+					normalized = (max - value) / (max - min)
+				}
 				population[i].Sim.DesignObjectiveResults[objective] = normalized
 			}
+			j += 1
 		}
 	}
 
@@ -87,17 +94,17 @@ func SampleInputs(inputConfig config.DesignStudyConfig) inputs.SimInputIteration
 func CalculateFitness(individual *Individual, dsc config.DesignStudyConfig) {
 	i := 0
 	for _, result := range individual.Sim.DesignObjectiveResults {
-		if dsc.DesignObjectives[i].Goal == "Maximize" {
-			individual.Fitness += result * float64(dsc.DesignObjectives[i].Weight)
-		} else { // Minimize
-			individual.Fitness -= result * float64(dsc.DesignObjectives[i].Weight)
-		}
+		// if dsc.DesignObjectives[i].Goal == "Maximize" {
+		individual.Fitness += result * float64(dsc.DesignObjectives[i].Weight)
+		// } else { // Minimize
+		// 	individual.Fitness -= result * float64(dsc.DesignObjectives[i].Weight)
+		// }
 		i += 1
 	}
 }
 
 func Evaluate(population Population, dsc config.DesignStudyConfig) Population {
-	population = Normalize(population)
+	population = Normalize(population, dsc)
 	for i := range population {
 		CalculateFitness(&population[i], dsc)
 		fmt.Printf("Sim: %d, Fitness: %f\n", population[i].Sim.JobNumber, population[i].Fitness)
@@ -125,6 +132,7 @@ func InitializePopulation(size int, dmConfig config.ConfigFile) Population {
 			simLogger,
 			dmConfig.SlurmConfig,
 			dmConfig.SlurmConfig.NodeList[i],
+			dmConfig.Test.Function,
 		)
 		individual := Individual{
 			Sim:     sim,

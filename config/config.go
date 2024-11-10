@@ -56,6 +56,11 @@ type DesignStudyConfig struct {
 	NtasksPerNode         int
 }
 
+type Test struct {
+	Test     bool
+	Function string
+}
+
 type ConfigFile struct {
 	UseDM             bool                    `json:"UseDM"` // use dm or just output generated scripts
 	OutputDir         string                  `json:"OutputDir"`
@@ -63,6 +68,7 @@ type ConfigFile struct {
 	DesignStudyConfig DesignStudyConfig       `json:"DesignStudyConfig"`
 	StarCCM           StarCCM                 `json:"Starccm"`
 	WorkingDir        string                  `json:"WorkingDir"`
+	Test              Test
 }
 
 func ParseDesignManagerConfigFile(configFilePath string) types.ConfigFile {

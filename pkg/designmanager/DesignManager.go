@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"runtime/pprof"
 	"strconv"
 	"strings"
 	"sync"
@@ -121,6 +120,7 @@ func (dm *DesignManager) HandleSweep(offset int, numSims int, hostIndex int) {
 			simLogger,
 			dm.ConfigFile.SlurmConfig,
 			dm.ConfigFile.SlurmConfig.NodeList[hostIndex],
+			dm.ConfigFile.Test.Function,
 		)
 		sim.Run()
 		simParams, simResults := sim.ParseSimulationResults()
@@ -197,6 +197,7 @@ func (dm *DesignManager) HandlePareto() {
 						ind.Fitness,
 					),
 				)
+				// dm.SimResults = append(dm.SimResults, ind.Sim.DesignObjectiveResults)
 			}
 			dm.Logger.Log("Saving compiled generation results")
 			dm.SaveCompiledResults(
@@ -207,11 +208,12 @@ func (dm *DesignManager) HandlePareto() {
 				),
 			)
 
+			// clear slices
+			dm.SimResults = nil
+			dm.SimResultParams = nil
+
 			continue
 		}
-		f, _ := os.Create(fmt.Sprintf("memprofile_%d.prof", generation))
-		pprof.WriteHeapProfile(f)
-		defer f.Close()
 		newPopulation := make(genetic.Population, 0, numSimsPerGeneration)
 		i := 1
 		for len(newPopulation) < numSimsPerGeneration {
@@ -230,6 +232,7 @@ func (dm *DesignManager) HandlePareto() {
 				simLogger,
 				dm.ConfigFile.SlurmConfig,
 				dm.ConfigFile.SlurmConfig.NodeList[i-1],
+				dm.ConfigFile.Test.Function,
 			)
 
 			child := genetic.Individual{
@@ -332,9 +335,6 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 }
 
 func (dm *DesignManager) SaveCompiledResults(fileName string) {
-	if fileName != "" {
-		// fileName = strings.TrimSuffix(dm.ConfigFile.StarCCM.SimFile, ".sim")
-	}
 	resultsFile, err := os.Create("Compiled_" + fileName + "_Report.csv")
 	if err != nil {
 		dm.Logger.Error("Failed to create results file", err)

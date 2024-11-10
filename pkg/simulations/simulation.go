@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +28,7 @@ type Simulation struct {
 	SlurmConfig            batchsystem.SlurmConfig
 	MachineFile            string
 	HostNodes              string
+	TestFunction           string
 }
 
 func LogSimParameters(inputParameters inputs.SimInputIteration) string {
@@ -59,6 +59,7 @@ func NewSimulation(
 	logger *log.Logger,
 	slurmConfig batchsystem.SlurmConfig,
 	hostNodes string,
+	testFunction string,
 ) *Simulation {
 	return &Simulation{
 		JobNumber:       simID,
@@ -67,15 +68,12 @@ func NewSimulation(
 		Logger:          logger,
 		SlurmConfig:     slurmConfig,
 		HostNodes:       hostNodes,
+		TestFunction:    testFunction,
 	}
 }
 
 func (simulation *Simulation) SetWorkingDir() {
 	simulation.JobDir = simulation.JobSubmission.WorkingDir + "/" + fmt.Sprint(simulation.JobNumber)
-	simulation.Logger.LogSimulation(
-		simulation.LogValue(),
-		fmt.Sprintf("Setting Working Directory %s", simulation.JobDir),
-	)
 }
 
 func (simulation *Simulation) Run() {
@@ -85,15 +83,9 @@ func (simulation *Simulation) Run() {
 	simulation.CreateSimulationDirectory()
 	simulation.CopySimulationFiles()
 	simulation.CreateSimulationInputFile()
-	// simulation.CreateSimulationMachineFile()
+	simulation.CreateSimulationMachineFile()
 	simulation.CreateJobScript()
 	simulation.RunSimulation()
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	simulation.Logger.LogSimulation(
-		simulation.LogValue(),
-		fmt.Sprintf("Alloc = %v MiB\n", m.Alloc/1024/1024),
-	)
 	simulation.Logger.LogSimulation(simulation.LogValue(), "Finished running simulation\n\n")
 
 	// simulation.DesignObjectiveResults = simulation.RunSimulation()
@@ -109,7 +101,6 @@ func (simulation *Simulation) SimulationInputs() {}
 
 func (simulation *Simulation) CreateSimulationDirectory() {
 	// create directory
-	simulation.Logger.LogSimulation(simulation.LogValue(), "Creating simulation directory")
 	err := os.MkdirAll(simulation.JobDir, 0o777)
 	if err != nil {
 		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
@@ -120,11 +111,6 @@ func (simulation *Simulation) CreateSimulationDirectory() {
 }
 
 func (simulation *Simulation) CopySimulationFiles() {
-	// copy files
-	simulation.Logger.LogSimulation(
-		simulation.LogValue(),
-		fmt.Sprintf("Copying files to %s\n", simulation.JobDir),
-	)
 	utils.CopyFile(
 		simulation.JobSubmission.WorkingDir+"/"+simulation.JobSubmission.SimFile,
 		simulation.JobDir+"/"+simulation.JobSubmission.SimFile,
@@ -133,6 +119,10 @@ func (simulation *Simulation) CopySimulationFiles() {
 		simulation.JobSubmission.WorkingDir+"/"+simulation.JobSubmission.JavaMacro,
 		simulation.JobDir+"/"+simulation.JobSubmission.JavaMacro,
 	)
+	if simulation.TestFunction != "" {
+		utils.CopyFile("MOOT", simulation.JobDir+"/MOOT")
+		_ = os.Chmod(fmt.Sprintf("%s/MOOT", simulation.JobDir), 0o777)
+	}
 	time.Sleep(time.Second)
 }
 
@@ -176,6 +166,7 @@ func (simulation *Simulation) CreateJobScript() {
 		simulation.InputParameters,
 		simulation.SlurmConfig,
 		simulation.HostNodes,
+		simulation.TestFunction,
 	)
 	time.Sleep(time.Second)
 }
