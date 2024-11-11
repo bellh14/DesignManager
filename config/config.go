@@ -21,20 +21,22 @@ type StarCCM struct {
 }
 
 type DesignParameter struct {
-	Name    string  `json:"Name"`
-	Units   string  `json:"Units"`
-	Min     float64 `json:"Min"`
-	Max     float64 `json:"Max"`
-	Step    float64 `json:"Step"`
-	NumSims int     `json:"NumSims"`
-	Mean    float64
-	StdDev  float64
+	Name          string  `json:"Name"`
+	Units         string  `json:"Units"`
+	Min           float64 `json:"Min"`
+	Max           float64 `json:"Max"`
+	Step          float64 `json:"Step"`
+	NumSims       int     `json:"NumSims"`
+	ScalingFactor float64 `json:"ScalingFactor"`
+	Mean          float64
+	StdDev        float64
 }
 
 type DesignObjective struct {
 	Name   string  `json:"Name"`
 	Goal   string  `json:"Goal"`   // minimize or maximize, ex: df would want maximize while drag minimize
 	Weight float32 `json:"Weight"` // may no explicitly use this
+	Target float32 `json:"Target"`
 }
 
 type MOOConfig struct {

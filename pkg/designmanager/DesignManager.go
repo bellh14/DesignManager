@@ -317,14 +317,21 @@ func (dm *DesignManager) HandlePareto() {
 	}
 }
 
+func (dm *DesignManager) HandleCustom() {}
+
 func (dm *DesignManager) HandleDesignStudy(studyType string) {
 	switch studyType {
 	case "AeroMap":
 		dm.Logger.Log("Running AeroMap")
 		dm.HandleAeroMap()
 	case "Pareto":
-		dm.HandlePareto()
-		dm.Logger.Log("Running Pareto Study")
+		if dm.ConfigFile.DesignStudyConfig.MOOConfig.OptimizationAlgorithm == "Genetic" {
+			dm.HandlePareto()
+			dm.Logger.Log("Running Pareto Study")
+		} else if dm.ConfigFile.DesignStudyConfig.MOOConfig.OptimizationAlgorithm == "Custom" {
+			dm.Logger.Log("Running MOO study with Custom PSO algorithm")
+			dm.HandleCustom()
+		}
 	case "Sweep":
 		dm.Logger.Log("Running design sweep")
 		dm.HandleSweep(0, dm.ConfigFile.DesignStudyConfig.NumSims, 0)
