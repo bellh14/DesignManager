@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/optimization/genetic"
@@ -112,7 +113,9 @@ func HandleSim(sim *simulations.Simulation, dsc config.DesignStudyConfig) map[st
 
 	sim.DesignObjectiveResults = designObjectives
 	sim.Run()
-	_, _ = sim.ParseSimulationResults()
+	if sim.Successful {
+		_, _ = sim.ParseSimulationResults()
+	}
 	return sim.DesignObjectiveResults
 }
 
@@ -169,10 +172,12 @@ func HandleGeneration(population *genetic.Population, dsc config.DesignStudyConf
 		jobs <- 1
 		go func(i int) {
 			defer wg.Done()
+			time.Sleep(10 * time.Second)
 			HandleSim((*population)[i].Sim, dsc)
 			<-jobs
 		}(i)
 	}
+
 	wg.Wait()
 }
 

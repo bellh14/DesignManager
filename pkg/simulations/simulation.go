@@ -1,6 +1,7 @@
 package simulations
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"log/slog"
@@ -29,6 +30,7 @@ type Simulation struct {
 	MachineFile            string
 	HostNodes              string
 	TestFunction           string
+	Successful             bool
 }
 
 func LogSimParameters(inputParameters inputs.SimInputIteration) string {
@@ -77,7 +79,7 @@ func (simulation *Simulation) SetWorkingDir() {
 }
 
 func (simulation *Simulation) Run() {
-	time.Sleep(time.Second * time.Duration(simulation.JobNumber) / 2)
+	time.Sleep(time.Second)
 	simulation.Logger.LogSimulation(simulation.LogValue(), "Running Simulation")
 	simulation.SetWorkingDir()
 	simulation.CreateSimulationDirectory()
@@ -175,15 +177,47 @@ func (simulation *Simulation) RunSimulation() {
 	// exec job script
 	simulation.Logger.LogSimulation(simulation.LogValue(), "Starting StarCCM+")
 
-	cmd := exec.Command(simulation.JobDir + "/sim_" + fmt.Sprint(simulation.JobNumber) + ".sh")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
+	defer cancel()
+
+	cmd := exec.CommandContext(
+		ctx,
+		simulation.JobDir+"/sim_"+fmt.Sprint(simulation.JobNumber)+".sh",
+	)
 	// cmd := exec.Command("sbatch", simulation.JobDir+"sim_"+fmt.Sprint(simulation.JobNumber)+".sh")
-	_, err := cmd.CombinedOutput()
-	if err != nil {
-		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
-		simError.SimError()
-		fmt.Printf(simError.SimError() + "\n")
-		simulation.Logger.Error(simError.SimError(), err)
+	errChan := make(chan error, 1)
+	go func() {
+		err := cmd.Run()
+		errChan <- err
+	}()
+
+	select {
+	case err := <-errChan:
+		if err != nil {
+			simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
+			simError.SimError()
+			simulation.Logger.Error(simError.SimError(), err)
+			simulation.Successful = false
+		}
+		simulation.Successful = true
+	case <-ctx.Done():
+		if ctx.Err() == context.DeadlineExceeded {
+			simulation.Logger.LogSimulation(
+				simulation.LogValue(),
+				"1 hour timeout reaced. Killing simulation.",
+			)
+			if killErr := cmd.Process.Kill(); killErr != nil {
+				simulation.Logger.Error("Failed to kill simulation", killErr)
+			}
+		}
 	}
+	// _, err := cmd.CombinedOutput()
+	// if err != nil {
+	// 	simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
+	// 	simError.SimError()
+	// 	fmt.Printf(simError.SimError() + "\n")
+	// 	simulation.Logger.Error(simError.SimError(), err)
+	// }
 }
 
 func (simulation *Simulation) ParseSimulationResults() ([]string, []float64) {
