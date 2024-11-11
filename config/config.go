@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/bellh14/DesignManager/pkg/discord"
 	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 	"github.com/bellh14/DesignManager/pkg/types"
 )
@@ -70,6 +71,7 @@ type ConfigFile struct {
 	DesignStudyConfig DesignStudyConfig       `json:"DesignStudyConfig"`
 	StarCCM           StarCCM                 `json:"Starccm"`
 	WorkingDir        string                  `json:"WorkingDir"`
+	Discord           discord.DiscordHook     `json:"Discord"`
 	Test              Test
 }
 

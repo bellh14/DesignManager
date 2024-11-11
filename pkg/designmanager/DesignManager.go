@@ -9,8 +9,10 @@ import (
 	"sync"
 
 	"github.com/bellh14/DesignManager/config"
+	"github.com/bellh14/DesignManager/pkg/discord"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
+	"github.com/bellh14/DesignManager/pkg/optimization/custom"
 	"github.com/bellh14/DesignManager/pkg/optimization/genetic"
 	"github.com/bellh14/DesignManager/pkg/simulations"
 	"github.com/bellh14/DesignManager/pkg/utils"
@@ -23,6 +25,7 @@ type DesignManager struct {
 	InputGenerator  inputs.SimInputGenerator
 	SimResultParams []string
 	SimResults      [][]float64
+	DiscordHook     discord.DiscordHook
 }
 
 func NewDesignManager(config config.ConfigFile, logger *log.Logger) *DesignManager {
@@ -44,6 +47,8 @@ func (dm *DesignManager) Run() {
 	}
 	dm.HandleDesignStudy(dm.ConfigFile.DesignStudyConfig.StudyType)
 	dm.SaveCompiledResults("")
+	dm.DiscordHook.PayloadJson.Content = "Finished running design study"
+	dm.DiscordHook.CallWebHook()
 }
 
 func (dm *DesignManager) HandleAeroMap() {
@@ -317,9 +322,13 @@ func (dm *DesignManager) HandlePareto() {
 	}
 }
 
-func (dm *DesignManager) HandleCustom() {}
+func (dm *DesignManager) HandleCustom() {
+	custom.HandleCustomAlg(dm.ConfigFile, dm.Logger, dm.DiscordHook)
+}
 
 func (dm *DesignManager) HandleDesignStudy(studyType string) {
+	dm.DiscordHook.PayloadJson.Content = "Running Design Study"
+	dm.DiscordHook.CallWebHook()
 	switch studyType {
 	case "AeroMap":
 		dm.Logger.Log("Running AeroMap")

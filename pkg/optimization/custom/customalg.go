@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bellh14/DesignManager/config"
+	"github.com/bellh14/DesignManager/pkg/discord"
 	"github.com/bellh14/DesignManager/pkg/optimization/genetic"
 	"github.com/bellh14/DesignManager/pkg/simulations"
 	"github.com/bellh14/DesignManager/pkg/utils/log"
@@ -138,7 +139,7 @@ func UpdateInputs(population *genetic.Population, dsc config.DesignStudyConfig) 
 	}
 }
 
-func HandleCustomAlg(config config.ConfigFile, logger *log.Logger) {
+func HandleCustomAlg(config config.ConfigFile, logger *log.Logger, discord discord.DiscordHook) {
 	dsc := config.DesignStudyConfig
 	mooConfig := dsc.MOOConfig
 	numSimsPerGen := mooConfig.NumSimsPerGeneration
@@ -158,6 +159,27 @@ func HandleCustomAlg(config config.ConfigFile, logger *log.Logger) {
 		}
 		logger.Log("Updating simulation parameters")
 		UpdateInputs(&population, dsc)
+		i := 1
+		for range numSimsPerGen {
+			simNum := (generation * numSimsPerGen) + i - 1
+			simLogger := log.NewLogger(0, fmt.Sprintf("Simulation: %d", simNum), "63")
+			population[i-1].Sim.JobNumber = simNum
+			population[i-1].Sim.Logger = simLogger
+
+			i += 1
+		}
+		HandleGeneration(&population, dsc)
+		population = Evaluate(population, dsc, logger)
+		PrintResults(population, logger)
+		if generation%4 == 0 {
+			discord.PayloadJson.Content = fmt.Sprintf(
+				"Best sim: %d after %d generations",
+				population[population.Len()-1].Sim.JobNumber,
+				generation,
+			)
+			discord.Files[0].FilePath = population[population.Len()-1].Sim.JobDir
+			discord.CallWebHook()
+		}
 	}
 }
 
