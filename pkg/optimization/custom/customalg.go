@@ -66,23 +66,33 @@ func CalculateFitness(
 			maxValues[objective],
 			goal,
 		)
+		fmt.Printf("Normalized result: %f\n", normalizedResult)
 
 		if goal == "Maximize" {
 			if target != 0 {
 				if result >= float64(target) {
-					individual.Fitness += normalizedResult * float64(weight)
+					targetBonus := (result - float64(target)) / (maxValues[objective] - float64(target))
+					fmt.Printf("Target Bonus: %f\n", targetBonus)
+					individual.Fitness += (normalizedResult + targetBonus) * float64(weight)
+					fmt.Printf("Fitness: %f\n", individual.Fitness)
 				} else {
-					individual.Fitness -= normalizedResult * float64(weight)
+					targetPenalty := (float64(target) - result) / (float64(target) - minValues[objective])
+					fmt.Printf("Target Penalty: %f\n", targetPenalty)
+					individual.Fitness -= (normalizedResult - targetPenalty) * float64(weight)
+					fmt.Printf("Fitness: %f\n", individual.Fitness)
 				}
 			} else {
 				individual.Fitness += normalizedResult * float64(weight)
+				fmt.Printf("Fitness: %f\n", individual.Fitness)
 			}
 		} else {
 			if target != 0 {
 				if result <= float64(target) {
-					individual.Fitness += normalizedResult * float64(weight)
+					targetBonus := (float64(target) - result) / (float64(target) - minValues[objective])
+					individual.Fitness += (normalizedResult + targetBonus) * float64(weight)
 				} else {
-					individual.Fitness -= normalizedResult * float64(weight)
+					targetPenalty := (result - float64(target)) / (maxValues[objective] - float64(target))
+					individual.Fitness -= (normalizedResult + targetPenalty) * float64(weight)
 				}
 			} else {
 				individual.Fitness += normalizedResult * float64(weight)

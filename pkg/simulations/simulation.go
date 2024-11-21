@@ -180,90 +180,74 @@ func (simulation *Simulation) UpdateStarPath(starPathOnNode string) {
 	simulation.JobSubmission.StarPath = starPathOnNode + "/" + simulation.JobSubmission.StarPath
 }
 
+func (simulation *Simulation) execSimulation(ctx context.Context, path string, errChan chan error) {
+	cmd := exec.CommandContext(ctx, path)
+
+	err := cmd.Run()
+	errChan <- err
+}
+
 func (simulation *Simulation) RunSimulation() {
 	// exec job script
 	simulation.Logger.LogSimulation(simulation.LogValue(), "Starting StarCCM+")
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Hour+time.Minute*10)
-	defer cancel()
+	retries := 0
+	maxRetries := 3
+	for {
+		errChan := make(chan error, 1)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Hour+time.Minute*10)
+		defer cancel()
 
-	// cmd := exec.CommandContext(
-	// 	ctx,
-	// 	fmt.Sprintf(
-	// 		"ssh %s && %s/sim_/%d.sh",
-	// 		simulation.HostNodes,
-	// 		simulation.JobDir,
-	// 		simulation.JobNumber,
-	// 	),
-	// )
-	// jobscriptFile := fmt.Sprintf("%s/sim_/%d.sh", simulation.JobDir, simulation.JobNumber)
-	// cmd := exec.CommandContext(ctx, "ssh", simulation.HostNodes, jobscriptFile)
-	// cmd := exec.CommandContext(ctx, jobscriptFile)
-	// cmd := exec.Command("sbatch", simulation.JobDir+"sim_"+fmt.Sprint(simulation.JobNumber)+".sh")
-	cmd := exec.CommandContext(
-		ctx,
-		simulation.JobDir+"/sim_"+fmt.Sprint(simulation.JobNumber)+".sh",
-	)
-	errChan := make(chan error, 1)
-	go func() {
-		err := cmd.Run()
-		errChan <- err
-	}()
-
-	select {
-	case err := <-errChan:
-		if err != nil {
-			if exitErr, ok := err.(*exec.ExitError); ok {
-				exitCode := exitErr.ExitCode()
-				switch exitCode {
-				case 2:
-					simulation.Logger.LogInfo(
-						"Simulation Failed during subtract, rerunning with new params",
-					)
-					for j, param := range simulation.DesignParameters {
-						simulation.InputParameters.Value[j] = probability.UniformDistribution(
-							param.Min,
-							param.Max,
+		go simulation.execSimulation(
+			ctx,
+			simulation.JobDir+"/sim_"+fmt.Sprint(simulation.JobNumber)+".sh",
+			errChan,
+		)
+		select {
+		case err := <-errChan:
+			if err != nil {
+				if exitErr, ok := err.(*exec.ExitError); ok {
+					exitCode := exitErr.ExitCode()
+					switch exitCode {
+					case 2:
+						simulation.Logger.LogInfo(
+							"Simulation Failed during subtract, rerunning with new params",
 						)
-					}
-					simulation.CreateSimulationInputFile()
-					simulation.CreateJobScript()
-					err = cmd.Run()
-					if err != nil {
+						for j, param := range simulation.DesignParameters {
+							simulation.InputParameters.Value[j] = probability.UniformDistribution(
+								param.Min,
+								param.Max,
+							)
+						}
+						simulation.CreateSimulationInputFile()
+						simulation.CreateJobScript()
+						retries += 1
+						if retries > maxRetries {
+							simulation.Logger.LogInfo(
+								"Simulation failed 3 times during subtract, ending sim",
+							)
+						}
+						continue
+
+					default:
 						simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
 						simError.SimError()
 						simulation.Logger.Error(simError.SimError(), err)
 						simulation.Successful = false
-
 					}
-
-				default:
-					simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
-					simError.SimError()
-					simulation.Logger.Error(simError.SimError(), err)
-					simulation.Successful = false
 				}
 			}
-		}
-		simulation.Successful = true
-	case <-ctx.Done():
-		if ctx.Err() == context.DeadlineExceeded {
-			simulation.Logger.LogSimulation(
-				simulation.LogValue(),
-				"1 hour timeout reaced. Killing simulation.",
-			)
-			if killErr := cmd.Process.Kill(); killErr != nil {
-				simulation.Logger.Error("Failed to kill simulation", killErr)
+			simulation.Successful = true
+		case <-ctx.Done():
+			if ctx.Err() == context.DeadlineExceeded {
+				simulation.Logger.LogSimulation(
+					simulation.LogValue(),
+					"1 hour timeout reaced. Killing simulation.",
+				)
 			}
 		}
+		break
 	}
-	// _, err := cmd.CombinedOutput()
-	// if err != nil {
-	// 	simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
-	// 	simError.SimError()
-	// 	fmt.Printf(simError.SimError() + "\n")
-	// 	simulation.Logger.Error(simError.SimError(), err)
-	// }
 }
 
 func (simulation *Simulation) ParseSimulationResults() ([]string, []float64) {
