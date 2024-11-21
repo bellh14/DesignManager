@@ -123,6 +123,7 @@ func InitializePopulation(size int, dmConfig config.ConfigFile) Population {
 	jobSubmission := jobscript.CreateJobSubmission(dmConfig)
 
 	for i := 0; i < size; i++ {
+
 		simInputs := SampleInputs(dmConfig.DesignStudyConfig)
 		simLogger := log.NewLogger(0, fmt.Sprintf("Simulation: %d", i), "63")
 		sim := simulations.NewSimulation(
@@ -134,6 +135,9 @@ func InitializePopulation(size int, dmConfig config.ConfigFile) Population {
 			dmConfig.SlurmConfig.NodeList[i],
 			dmConfig.Test.Function,
 		)
+		if dmConfig.StarCCM.InstallSoftware {
+			sim.UpdateStarPath(dmConfig.StarCCM.InstallDest)
+		}
 		individual := Individual{
 			Sim:     sim,
 			Fitness: 0.0,

@@ -11,12 +11,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bellh14/DesignManager/config"
 	e "github.com/bellh14/DesignManager/pkg/err"
 	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
 	"github.com/bellh14/DesignManager/pkg/utils"
 	"github.com/bellh14/DesignManager/pkg/utils/log"
+	"github.com/bellh14/DesignManager/pkg/utils/math/probability"
 )
 
 type Simulation struct {
@@ -31,6 +33,7 @@ type Simulation struct {
 	HostNodes              string
 	TestFunction           string
 	Successful             bool
+	DesignParameters       []config.DesignParameter // very very dumb and will change later
 }
 
 func LogSimParameters(inputParameters inputs.SimInputIteration) string {
@@ -130,7 +133,7 @@ func (simulation *Simulation) CopySimulationFiles() {
 
 func (simulation *Simulation) CreateSimulationInputFile() {
 	// create input file
-	simulation.Logger.LogSimulation(simulation.LogValue(), "Creating Input CSV")
+	// simulation.Logger.LogSimulation(simulation.LogValue(), "Creating Input CSV")
 	inputFile, err := os.Create(simulation.JobDir + "/InputParams.csv")
 	if err != nil {
 		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
@@ -145,7 +148,7 @@ func (simulation *Simulation) CreateSimulationInputFile() {
 }
 
 func (simulation *Simulation) CreateSimulationMachineFile() {
-	simulation.Logger.LogSimulation(simulation.LogValue(), "Creating machinefile")
+	// simulation.Logger.LogSimulation(simulation.LogValue(), "Creating machinefile")
 	simulation.MachineFile = fmt.Sprintf("%d.txt", simulation.JobNumber)
 	err := jobscript.CreateMachineFile(
 		fmt.Sprintf("%s/%s", simulation.JobDir, simulation.MachineFile),
@@ -161,7 +164,7 @@ func (simulation *Simulation) CreateSimulationMachineFile() {
 }
 
 func (simulation *Simulation) CreateJobScript() {
-	simulation.Logger.LogSimulation(simulation.LogValue(), "Creating Job Script")
+	// simulation.Logger.LogSimulation(simulation.LogValue(), "Creating Job Script")
 	jobscript.GenerateJobScript(
 		simulation.JobSubmission,
 		simulation.JobNumber,
@@ -173,18 +176,34 @@ func (simulation *Simulation) CreateJobScript() {
 	time.Sleep(time.Second)
 }
 
+func (simulation *Simulation) UpdateStarPath(starPathOnNode string) {
+	simulation.JobSubmission.StarPath = starPathOnNode + "/" + simulation.JobSubmission.StarPath
+}
+
 func (simulation *Simulation) RunSimulation() {
 	// exec job script
 	simulation.Logger.LogSimulation(simulation.LogValue(), "Starting StarCCM+")
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Hour+time.Minute*10)
 	defer cancel()
 
+	// cmd := exec.CommandContext(
+	// 	ctx,
+	// 	fmt.Sprintf(
+	// 		"ssh %s && %s/sim_/%d.sh",
+	// 		simulation.HostNodes,
+	// 		simulation.JobDir,
+	// 		simulation.JobNumber,
+	// 	),
+	// )
+	// jobscriptFile := fmt.Sprintf("%s/sim_/%d.sh", simulation.JobDir, simulation.JobNumber)
+	// cmd := exec.CommandContext(ctx, "ssh", simulation.HostNodes, jobscriptFile)
+	// cmd := exec.CommandContext(ctx, jobscriptFile)
+	// cmd := exec.Command("sbatch", simulation.JobDir+"sim_"+fmt.Sprint(simulation.JobNumber)+".sh")
 	cmd := exec.CommandContext(
 		ctx,
 		simulation.JobDir+"/sim_"+fmt.Sprint(simulation.JobNumber)+".sh",
 	)
-	// cmd := exec.Command("sbatch", simulation.JobDir+"sim_"+fmt.Sprint(simulation.JobNumber)+".sh")
 	errChan := make(chan error, 1)
 	go func() {
 		err := cmd.Run()
@@ -194,10 +213,37 @@ func (simulation *Simulation) RunSimulation() {
 	select {
 	case err := <-errChan:
 		if err != nil {
-			simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
-			simError.SimError()
-			simulation.Logger.Error(simError.SimError(), err)
-			simulation.Successful = false
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				exitCode := exitErr.ExitCode()
+				switch exitCode {
+				case 2:
+					simulation.Logger.LogInfo(
+						"Simulation Failed during subtract, rerunning with new params",
+					)
+					for j, param := range simulation.DesignParameters {
+						simulation.InputParameters.Value[j] = probability.UniformDistribution(
+							param.Min,
+							param.Max,
+						)
+					}
+					simulation.CreateSimulationInputFile()
+					simulation.CreateJobScript()
+					err = cmd.Run()
+					if err != nil {
+						simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
+						simError.SimError()
+						simulation.Logger.Error(simError.SimError(), err)
+						simulation.Successful = false
+
+					}
+
+				default:
+					simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
+					simError.SimError()
+					simulation.Logger.Error(simError.SimError(), err)
+					simulation.Successful = false
+				}
+			}
 		}
 		simulation.Successful = true
 	case <-ctx.Done():
@@ -221,6 +267,10 @@ func (simulation *Simulation) RunSimulation() {
 }
 
 func (simulation *Simulation) ParseSimulationResults() ([]string, []float64) {
+	if !simulation.Successful {
+		simulation.Logger.LogInfo("Simulation failed, skipping parsing results")
+		return nil, nil
+	}
 	// parse results
 	simName := strings.TrimSuffix(simulation.JobSubmission.SimFile, ".sim")
 	reportName := simulation.JobDir + "/" + simName + "_Report.csv"

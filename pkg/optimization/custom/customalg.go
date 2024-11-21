@@ -3,6 +3,7 @@ package custom
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"sort"
 	"sync"
 	"time"
@@ -21,6 +22,9 @@ func CalculateObjectivesPeaks(
 	maxValues := make(map[string]float64)
 
 	for _, individual := range population {
+		if !individual.Sim.Successful {
+			continue
+		}
 		for objective, value := range individual.Sim.DesignObjectiveResults {
 			if _, exists := minValues[objective]; !exists {
 				minValues[objective] = math.Inf(1)
@@ -50,6 +54,7 @@ func CalculateFitness(
 	minValues, maxValues map[string]float64,
 ) {
 	i := 0
+	individual.Fitness = 0
 	for objective, result := range individual.Sim.DesignObjectiveResults {
 		goal := dsc.DesignObjectives[i].Goal
 		target := dsc.DesignObjectives[i].Target
@@ -79,6 +84,8 @@ func CalculateFitness(
 				} else {
 					individual.Fitness -= normalizedResult * float64(weight)
 				}
+			} else {
+				individual.Fitness += normalizedResult * float64(weight)
 			}
 		}
 		i += 1
@@ -113,6 +120,7 @@ func HandleSim(sim *simulations.Simulation, dsc config.DesignStudyConfig) map[st
 	}
 
 	sim.DesignObjectiveResults = designObjectives
+	time.Sleep(time.Duration(rand.Intn(3)+1) * time.Second)
 	sim.Run()
 	if sim.Successful {
 		_, _ = sim.ParseSimulationResults()
@@ -132,6 +140,11 @@ func UpdateInputs(population *genetic.Population, dsc config.DesignStudyConfig) 
 			)/float64(
 				population.Len(),
 			)
+			if updateValue > dsc.DesignParameters[j].Max {
+				updateValue = dsc.DesignParameters[j].Max
+			} else if updateValue < dsc.DesignParameters[j].Min {
+				updateValue = dsc.DesignParameters[j].Min
+			}
 			newInd := ind
 			newInd.Sim.InputParameters.Value[i] = updateValue
 			(*population)[j] = newInd
@@ -155,6 +168,13 @@ func HandleCustomAlg(config config.ConfigFile, logger *log.Logger, discord disco
 			logger.Log("Evaluating Population")
 			population = Evaluate(population, dsc, logger)
 			PrintResults(population, logger)
+			discord.PayloadJson.Content = fmt.Sprintf(
+				"Best sim: %d after %d generations",
+				population[population.Len()-1].Sim.JobNumber,
+				generation,
+			)
+			discord.Files[0].FilePath = population[population.Len()-1].Sim.JobDir
+			discord.CallWebHook(true)
 			continue
 		}
 		logger.Log("Updating simulation parameters")
@@ -171,15 +191,13 @@ func HandleCustomAlg(config config.ConfigFile, logger *log.Logger, discord disco
 		HandleGeneration(&population, dsc)
 		population = Evaluate(population, dsc, logger)
 		PrintResults(population, logger)
-		if generation%4 == 0 {
-			discord.PayloadJson.Content = fmt.Sprintf(
-				"Best sim: %d after %d generations",
-				population[population.Len()-1].Sim.JobNumber,
-				generation,
-			)
-			discord.Files[0].FilePath = population[population.Len()-1].Sim.JobDir
-			discord.CallWebHook()
-		}
+		discord.PayloadJson.Content = fmt.Sprintf(
+			"Best sim: %d after %d generations",
+			population[population.Len()-1].Sim.JobNumber,
+			generation,
+		)
+		discord.Files[0].FilePath = population[population.Len()-1].Sim.JobDir
+		discord.CallWebHook(true)
 	}
 }
 
@@ -190,11 +208,11 @@ func HandleGeneration(population *genetic.Population, dsc config.DesignStudyConf
 	wg := sync.WaitGroup{}
 
 	for i := range numSimsPerGen {
+		time.Sleep(10 * time.Second)
 		wg.Add(1)
 		jobs <- 1
 		go func(i int) {
 			defer wg.Done()
-			time.Sleep(10 * time.Second)
 			HandleSim((*population)[i].Sim, dsc)
 			<-jobs
 		}(i)

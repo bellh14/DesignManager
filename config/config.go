@@ -14,11 +14,14 @@ import (
 )
 
 type StarCCM struct {
-	StarPath   string `json:"StarPath"`
-	PodKey     string `json:"PodKey"`
-	JavaMacro  string `json:"JavaMacro"`
-	SimFile    string `json:"SimFile"`
-	WorkingDir string `json:"WorkingDir"` // dumb bs that needs to be set to start remote star remote servers
+	StarPath        string `json:"StarPath"`
+	PodKey          string `json:"PodKey"`
+	JavaMacro       string `json:"JavaMacro"`
+	SimFile         string `json:"SimFile"`
+	WorkingDir      string `json:"WorkingDir"` // dumb bs that needs to be set to start remote star remote servers
+	InstallSoftware bool   `json:"InstallSoftware"`
+	TarBall         string `json:"TarBall"`
+	InstallDest     string `json:"InstallDest"`
 }
 
 type DesignParameter struct {

@@ -20,16 +20,16 @@ type PayloadJson struct {
 }
 
 type FileInfo struct { // FileNum=@FileName
-	FieldName string // file1, file2, etc
-	FileName  string
-	FilePath  string
+	FieldName string `json:"FieldName"` // file1, file2, etc
+	FileName  string `json:"FileName"`
+	FilePath  string `json:"FilePath"`
 }
 
 type DiscordHook struct {
-	PayloadJson PayloadJson
-	Files       []FileInfo
-	WebhookURL  string
-	ThreadID    string
+	PayloadJson PayloadJson `json:"PayloadJson"`
+	Files       []FileInfo  `json:"Files"`
+	WebhookURL  string      `json:"WebhookURL"`
+	ThreadID    string      `json:"ThreadID"`
 	Logger      log.Logger
 }
 
@@ -49,7 +49,7 @@ func NewDiscordHook(
 	}
 }
 
-func (dis *DiscordHook) CallWebHook() {
+func (dis *DiscordHook) CallWebHook(sendFiles bool) {
 	url, err := url.Parse(dis.WebhookURL)
 	if err != nil {
 		dis.Logger.Error("Error Parsing url:", err)
@@ -71,22 +71,24 @@ func (dis *DiscordHook) CallWebHook() {
 		return
 	}
 
-	for _, fileInfo := range dis.Files {
-		fullFileName := dis.Files[0].FilePath + "/" + fileInfo.FileName
-		file, err := os.Open(fullFileName)
-		if err != nil {
-			dis.Logger.Error(fmt.Sprintf("Error opening file %s:", fileInfo.FileName), err)
-		}
-		defer file.Close()
+	if sendFiles {
+		for _, fileInfo := range dis.Files {
+			fullFileName := dis.Files[0].FilePath + "/" + fileInfo.FileName
+			file, err := os.Open(fullFileName)
+			if err != nil {
+				dis.Logger.Error(fmt.Sprintf("Error opening file %s:", fileInfo.FileName), err)
+			}
+			defer file.Close()
 
-		part, err := writer.CreateFormFile(fileInfo.FieldName, filepath.Base(fileInfo.FileName))
-		if err != nil {
-			dis.Logger.Error("Error creating form file:", err)
-		}
+			part, err := writer.CreateFormFile(fileInfo.FieldName, filepath.Base(fileInfo.FileName))
+			if err != nil {
+				dis.Logger.Error("Error creating form file:", err)
+			}
 
-		_, err = io.Copy(part, file)
-		if err != nil {
-			dis.Logger.Error("Error copying file content:", err)
+			_, err = io.Copy(part, file)
+			if err != nil {
+				dis.Logger.Error("Error copying file content:", err)
+			}
 		}
 	}
 
@@ -101,13 +103,13 @@ func (dis *DiscordHook) CallWebHook() {
 		url.RawQuery = query.Encode()
 	}
 
-	req, err := http.NewRequest("Post", url.String(), &requestBody)
+	req, err := http.NewRequest("POST", url.String(), &requestBody)
 	if err != nil {
 		dis.Logger.Error("Error creating request:", err)
 		return
 	}
 
-	req.Header.Set("Content-Type", "multipart/form-data")
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

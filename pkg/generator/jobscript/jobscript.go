@@ -78,7 +78,11 @@ func GenerateJobScript(
 
 	utils.WriteStructOfBashVariables(jobSubmissionValues, jobScript, []string{})
 
-	jobScript.WriteString("\nmodule load starccm/18.06.006\ncd $StarWorkingDir\n\n")
+	if jobScriptInputs.StarPath == "" {
+		jobScript.WriteString("\nmodule load starccm/18.06.006\n")
+	}
+
+	jobScript.WriteString("\ncd $StarWorkingDir\n\n")
 
 	// jobScript.WriteString("mkdir $WorkingDir/$JobNumber\n\n")
 
