@@ -103,7 +103,7 @@ func GenerateJobScript(
 		if jobScriptInputs.StarPath == "" {
 			jobScript.WriteString(
 				fmt.Sprintf(
-					"starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -machinefile $WorkingDir/%s -time -batch-report > $WorkingDir/output.txt 2>&1",
+					"starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -on %s -time -batch-report > $WorkingDir/output.txt 2>&1",
 					// jobScriptInputs.Ntasks,
 					// coreOffset,
 					paramString,

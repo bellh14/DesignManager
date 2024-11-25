@@ -8,8 +8,8 @@ lint:
 
 .PHONY: build
 build:
-	@GOOS=linux GOARCH=amd64 go build -C cmd/ -o ../bin/DesignManager
-	@GOOS=linux GOARCH=arm64 go build -C cmd/ -o ../bin/DesignManager-aarch64
+	@GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -C cmd/ -tags netgo -ldflags="-w -s" -o ../bin/DesignManager
+	@GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -C cmd/ -tags netgo -ldflags="-w -s" -o ../bin/DesignManager-aarch64
 
 .PHONY: run
 run: build
