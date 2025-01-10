@@ -61,6 +61,13 @@ func GenerateJobScript(
 	// TODO: make this less painful to read
 	jobDir := jobScriptInputs.WorkingDir + "/" + fmt.Sprint(jobNumber)
 	jobScriptInputs.StarWorkingDir += "/" + fmt.Sprint(jobNumber)
+	_, err := os.Stat(fmt.Sprintf("%s/sim_%d.sh", jobDir, jobNumber))
+	if !os.IsNotExist(err) {
+		err := os.Remove(fmt.Sprintf("%s/sim_%d.sh", jobDir, jobNumber))
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 	jobScript, err := os.Create(fmt.Sprintf("%s/sim_%d.sh", jobDir, jobNumber))
 	if err != nil {
 		// TODO: handle error
@@ -103,7 +110,7 @@ func GenerateJobScript(
 		if jobScriptInputs.StarPath == "" {
 			jobScript.WriteString(
 				fmt.Sprintf(
-					"starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -on %s -time -batch-report > $WorkingDir/output.txt 2>&1",
+					"starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -on %s -time -batch-report -jvmargs -Xmx16G> $WorkingDir/output.txt 2>&1",
 					// jobScriptInputs.Ntasks,
 					// coreOffset,
 					paramString,
@@ -113,7 +120,7 @@ func GenerateJobScript(
 		} else {
 			jobScript.WriteString(
 				fmt.Sprintf(
-					"$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -on %s -time -batch-report > $WorkingDir/output.txt 2>&1",
+					"$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -on %s -time -batch-report -jvmargs -Xmx16G> $WorkingDir/output.txt 2>&1",
 					// jobScriptInputs.Ntasks,
 					// coreOffset,
 					paramString,

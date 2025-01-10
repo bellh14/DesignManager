@@ -393,8 +393,8 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 		dm.HandleAeroMap()
 	case "Pareto":
 		if dm.ConfigFile.DesignStudyConfig.MOOConfig.OptimizationAlgorithm == "Genetic" {
-			dm.HandlePareto()
 			dm.Logger.Log("Running Pareto Study")
+			dm.HandlePareto()
 		} else if dm.ConfigFile.DesignStudyConfig.MOOConfig.OptimizationAlgorithm == "Custom" {
 			dm.Logger.Log("Running MOO study with Custom PSO algorithm")
 			dm.HandleCustom()

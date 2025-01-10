@@ -5,9 +5,11 @@ import (
 	"testing"
 
 	"github.com/bellh14/DesignManager/config"
+	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/optimization/custom"
 	"github.com/bellh14/DesignManager/pkg/optimization/genetic"
 	"github.com/bellh14/DesignManager/pkg/simulations"
+	"github.com/bellh14/DesignManager/pkg/utils/log"
 )
 
 func TestCalculateObjectivesPeaks(t *testing.T) {
@@ -141,5 +143,91 @@ func TestCalculateFitness(t *testing.T) {
 
 	if math.Abs(individual.Fitness-0.698750) > 0.0001 {
 		t.Errorf("Expected fitness value to be 0.698750, got %f", individual.Fitness)
+	}
+}
+
+func TestUpdateInputs(t *testing.T) {
+	t.Helper()
+	logger := log.NewLogger(2, "DM", "#941ff4")
+
+	// Create a population with different simulations
+	population := genetic.Population{
+		genetic.Individual{
+			Sim: &simulations.Simulation{
+				JobNumber: 1,
+				InputParameters: inputs.SimInputIteration{
+					Name:  []string{"param1", "param2"},
+					Value: []float64{-1.0, -20.0},
+				},
+			},
+			Fitness: 0.0,
+		},
+		genetic.Individual{
+			Sim: &simulations.Simulation{
+				JobNumber: 2,
+				InputParameters: inputs.SimInputIteration{
+					Name:  []string{"param1", "param2"},
+					Value: []float64{15.0, 2.0},
+				},
+			},
+			Fitness: 1.0,
+		},
+		genetic.Individual{
+			Sim: &simulations.Simulation{
+				JobNumber: 3,
+				InputParameters: inputs.SimInputIteration{
+					Name:  []string{"param1", "param2"},
+					Value: []float64{10.0, -12.0},
+				},
+			},
+			Fitness: 3.0,
+		},
+	}
+
+	// Best simulation is the last one in the population
+	//bestSim := population[2]
+
+	// Create a design study config
+	dsc := config.DesignStudyConfig{
+		DesignParameters: []config.DesignParameter{
+			{
+				Name:          "param1",
+				ScalingFactor: 0.5,
+				Min:           -10.0,
+				Max:           25.0,
+			},
+			{
+				Name:          "param2",
+				ScalingFactor: 0.5,
+				Min:           -20.0,
+				Max:           15.0,
+			},
+		},
+	}
+
+	// Call the UpdateInputs function
+	custom.UpdateInputs(&population, dsc, logger)
+
+	// check if the simulations are updated towards the best simulation
+
+	for i, ind := range population {
+		if ind.Sim.InputParameters.Value[0] == 10.0 {
+			if i == 0 {
+				t.Errorf("Expected param1 value to be updated for simulation 1")
+			}
+		}
+		if ind.Sim.InputParameters.Value[1] == -12.0 {
+			if i == 0 {
+				t.Errorf("Expected param2 value to be updated for simulation 1")
+			}
+		}
+
+		if ind.Sim.InputParameters.Value[0] < -1 {
+			if i == 0 {
+				t.Errorf("Expected sim 0 param1 to be greater than -1")
+			}
+
+		}
+
 	}
 }

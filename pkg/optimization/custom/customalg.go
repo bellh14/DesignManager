@@ -42,6 +42,9 @@ func CalculateObjectivesPeaks(
 }
 
 func Normalize(result, min, max float64, goal string) float64 {
+	if max == min {
+		return 0.0
+	}
 	if goal == "Maximize" {
 		return (result - min) / (max - min)
 	}
@@ -138,23 +141,36 @@ func HandleSim(sim *simulations.Simulation, dsc config.DesignStudyConfig) map[st
 	return sim.DesignObjectiveResults
 }
 
-func UpdateInputs(population *genetic.Population, dsc config.DesignStudyConfig) {
+func UpdateInputs(
+	population *genetic.Population,
+	dsc config.DesignStudyConfig,
+	logger *log.Logger,
+) {
 	for i := range len(dsc.DesignParameters) {
 		bestValue := (*population)[population.Len()-1].Sim.InputParameters.Value[i]
 
 		for j, ind := range *population {
-			distance := math.Abs(bestValue - ind.Sim.InputParameters.Value[i])
-			scalingFactor := dsc.DesignParameters[i].ScalingFactor
-			updateValue := ind.Sim.InputParameters.Value[i] + scalingFactor*distance*float64(
-				population.Len()-j,
-			)/float64(
-				population.Len(),
+			distance := bestValue - ind.Sim.InputParameters.Value[i]
+			paramRange := dsc.DesignParameters[i].Max - dsc.DesignParameters[i].Min
+			updateValue := ind.Sim.InputParameters.Value[i] + (distance/paramRange)*math.Abs(
+				distance,
 			)
-			if updateValue > dsc.DesignParameters[j].Max {
-				updateValue = dsc.DesignParameters[j].Max
-			} else if updateValue < dsc.DesignParameters[j].Min {
-				updateValue = dsc.DesignParameters[j].Min
+			if updateValue > dsc.DesignParameters[i].Max {
+				updateValue = dsc.DesignParameters[i].Max
+			} else if updateValue < dsc.DesignParameters[i].Min {
+				updateValue = dsc.DesignParameters[i].Min
 			}
+			logger.LogInfo(
+				fmt.Sprintf(
+					"Param: %s\nBest: %v\nSim %v: Old value: %v\nSim %v: New Value: %v",
+					ind.Sim.InputParameters.Name[i],
+					bestValue,
+					ind.Sim.JobNumber,
+					ind.Sim.InputParameters.Value[i],
+					ind.Sim.JobNumber,
+					updateValue,
+				),
+			)
 			newInd := ind
 			newInd.Sim.InputParameters.Value[i] = updateValue
 			(*population)[j] = newInd
@@ -188,7 +204,7 @@ func HandleCustomAlg(config config.ConfigFile, logger *log.Logger, discord disco
 			continue
 		}
 		logger.Log("Updating simulation parameters")
-		UpdateInputs(&population, dsc)
+		UpdateInputs(&population, dsc, logger)
 		i := 1
 		for range numSimsPerGen {
 			simNum := (generation * numSimsPerGen) + i - 1

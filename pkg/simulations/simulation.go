@@ -1,7 +1,6 @@
 package simulations
 
 import (
-	"context"
 	"encoding/csv"
 	"fmt"
 	"log/slog"
@@ -18,7 +17,6 @@ import (
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
 	"github.com/bellh14/DesignManager/pkg/utils"
 	"github.com/bellh14/DesignManager/pkg/utils/log"
-	"github.com/bellh14/DesignManager/pkg/utils/math/probability"
 )
 
 type Simulation struct {
@@ -180,75 +178,96 @@ func (simulation *Simulation) UpdateStarPath(starPathOnNode string) {
 	simulation.JobSubmission.StarPath = starPathOnNode + "/" + simulation.JobSubmission.StarPath
 }
 
-func (simulation *Simulation) execSimulation(ctx context.Context, path string, errChan chan error) {
-	cmd := exec.CommandContext(ctx, path)
-
-	err := cmd.Run()
-	errChan <- err
-}
-
 func (simulation *Simulation) RunSimulation() {
 	// exec job script
 	simulation.Logger.LogSimulation(simulation.LogValue(), "Starting StarCCM+")
 
-	retries := 0
-	maxRetries := 3
-	for {
-		errChan := make(chan error, 1)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Hour+time.Minute*10)
-		defer cancel()
-
-		go simulation.execSimulation(
-			ctx,
-			simulation.JobDir+"/sim_"+fmt.Sprint(simulation.JobNumber)+".sh",
-			errChan,
-		)
-		select {
-		case err := <-errChan:
-			if err != nil {
-				if exitErr, ok := err.(*exec.ExitError); ok {
-					exitCode := exitErr.ExitCode()
-					switch exitCode {
-					case 2:
-						simulation.Logger.LogInfo(
-							"Simulation Failed during subtract, rerunning with new params",
-						)
-						for j, param := range simulation.DesignParameters {
-							simulation.InputParameters.Value[j] = probability.UniformDistribution(
-								param.Min,
-								param.Max,
-							)
-						}
-						simulation.CreateSimulationInputFile()
-						simulation.CreateJobScript()
-						retries += 1
-						if retries > maxRetries {
-							simulation.Logger.LogInfo(
-								"Simulation failed 3 times during subtract, ending sim",
-							)
-						}
-						continue
-
-					default:
-						simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
-						simError.SimError()
-						simulation.Logger.Error(simError.SimError(), err)
-						simulation.Successful = false
-					}
-				}
-			}
-			simulation.Successful = true
-		case <-ctx.Done():
-			if ctx.Err() == context.DeadlineExceeded {
-				simulation.Logger.LogSimulation(
-					simulation.LogValue(),
-					"1 hour timeout reaced. Killing simulation.",
-				)
-			}
-		}
-		break
+	cmd := exec.Command(simulation.JobDir + "/sim_" + fmt.Sprint(simulation.JobNumber) + ".sh")
+	// cmd := exec.Command("sbatch", simulation.JobDir+"sim_"+fmt.Sprint(simulation.JobNumber)+".sh")
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
+		simError.SimError()
+		fmt.Printf(simError.SimError() + "\n")
+		simulation.Logger.Error(simError.SimError(), err)
+		simulation.Successful = false
 	}
+	simulation.Successful = true
 }
+
+// func (simulation *Simulation) execSimulation(ctx context.Context, path string, errChan chan error) {
+// 	cmd := exec.CommandContext(ctx, path)
+//
+// 	err := cmd.Run()
+// 	errChan <- err
+// }
+//
+// func (simulation *Simulation) RunSimulation() {
+// 	// exec job script
+// 	simulation.Logger.LogSimulation(simulation.LogValue(), "Starting StarCCM+")
+//
+// 	retries := 0
+// 	maxRetries := 3
+// 	for {
+// 		errChan := make(chan error, 1)
+// 		ctx, cancel := context.WithTimeout(context.Background(), time.Hour+time.Minute*10)
+// 		defer cancel()
+//
+// 		go simulation.execSimulation(
+// 			ctx,
+// 			simulation.JobDir+"/sim_"+fmt.Sprint(simulation.JobNumber)+".sh",
+// 			errChan,
+// 		)
+// 		select {
+// 		case err := <-errChan:
+// 			if err != nil {
+// 				if exitErr, ok := err.(*exec.ExitError); ok {
+// 					exitCode := exitErr.ExitCode()
+// 					switch exitCode {
+// 					case 2:
+// 						simulation.Logger.LogInfo(
+// 							"Simulation Failed during subtract, rerunning with new params",
+// 						)
+// 						time.Sleep(time.Second * 5)
+// 						for j, param := range simulation.DesignParameters {
+// 							simulation.InputParameters.Value[j] = probability.UniformDistribution(
+// 								param.Min,
+// 								param.Max,
+// 							)
+// 						}
+// 						simulation.CreateSimulationInputFile()
+// 						simulation.CreateJobScript()
+// 						retries += 1
+// 						if retries > maxRetries {
+// 							simulation.Logger.LogInfo(
+// 								"Simulation failed 3 times during subtract, ending sim",
+// 							)
+// 						}
+// 						cancel()
+// 						continue
+//
+// 					default:
+// 						simError := e.SimulationError{JobNumber: simulation.JobNumber, Err: err}
+// 						simError.SimError()
+// 						simulation.Logger.Error(simError.SimError(), err)
+// 						simulation.Successful = false
+// 						cancel()
+// 					}
+// 				}
+// 			}
+// 			simulation.Successful = true
+// 		case <-ctx.Done():
+// 			if ctx.Err() == context.DeadlineExceeded {
+// 				simulation.Logger.LogSimulation(
+// 					simulation.LogValue(),
+// 					"1 hour timeout reaced. Killing simulation.",
+// 				)
+// 			}
+// 		}
+// 		cancel()
+// 		break
+// 	}
+// }
 
 func (simulation *Simulation) ParseSimulationResults() ([]string, []float64) {
 	if !simulation.Successful {
@@ -261,6 +280,7 @@ func (simulation *Simulation) ParseSimulationResults() ([]string, []float64) {
 	file, err := os.Open(reportName)
 	if err != nil {
 		simulation.Logger.Error("Failed to parse simulation results", err)
+		simulation.Successful = false
 	}
 	defer file.Close()
 
@@ -269,12 +289,14 @@ func (simulation *Simulation) ParseSimulationResults() ([]string, []float64) {
 	parameterNames, err := csvReader.Read()
 	if err != nil {
 		simulation.Logger.Error("Failed to read report header", err)
+		simulation.Successful = false
 		return nil, nil
 	}
 
 	parameterResults, err := csvReader.Read()
 	if err != nil {
 		simulation.Logger.Error("Failed to read report values", err)
+		simulation.Successful = false
 		return nil, nil
 	}
 
