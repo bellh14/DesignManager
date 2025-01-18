@@ -13,6 +13,7 @@ import (
 	"github.com/bellh14/DesignManager/pkg/optimization/genetic"
 	"github.com/bellh14/DesignManager/pkg/simulations"
 	"github.com/bellh14/DesignManager/pkg/utils/log"
+	"github.com/bellh14/DesignManager/pkg/utils/math/probability"
 )
 
 func CalculateObjectivesPeaks(
@@ -100,6 +101,9 @@ func CalculateFitness(
 			} else {
 				individual.Fitness += normalizedResult * float64(weight)
 			}
+		}
+		if !individual.Sim.Successful {
+			individual.Fitness = -10
 		}
 		i += 1
 	}
@@ -205,6 +209,7 @@ func HandleCustomAlg(config config.ConfigFile, logger *log.Logger, discord disco
 		}
 		logger.Log("Updating simulation parameters")
 		UpdateInputs(&population, dsc, logger)
+		Mutate(&population, dsc, logger)
 		i := 1
 		for range numSimsPerGen {
 			simNum := (generation * numSimsPerGen) + i - 1
@@ -245,6 +250,21 @@ func HandleGeneration(population *genetic.Population, dsc config.DesignStudyConf
 	}
 
 	wg.Wait()
+}
+
+func Mutate(population *genetic.Population, dsc config.DesignStudyConfig, logger *log.Logger) {
+	// resample worst performing sims in each generation for better diversity
+	numberMutated := int(float32(dsc.MOOConfig.NumSimsPerGeneration) * dsc.MOOConfig.MutationRate)
+	logger.Log(fmt.Sprintf("Resampling worst %d sims", numberMutated))
+
+	for i := range numberMutated {
+		for j := range (*population)[i].Sim.InputParameters.Value {
+			(*population)[i].Sim.InputParameters.Value[j] = probability.UniformDistribution(
+				dsc.DesignParameters[j].Min,
+				dsc.DesignParameters[j].Max,
+			)
+		}
+	}
 }
 
 func PrintResults(population genetic.Population, logger *log.Logger) {
