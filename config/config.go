@@ -8,33 +8,39 @@ import (
 	"io"
 	"os"
 
+	"github.com/bellh14/DesignManager/pkg/discord"
 	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
 	"github.com/bellh14/DesignManager/pkg/types"
 )
 
 type StarCCM struct {
-	StarPath   string `json:"StarPath"`
-	PodKey     string `json:"PodKey"`
-	JavaMacro  string `json:"JavaMacro"`
-	SimFile    string `json:"SimFile"`
-	WorkingDir string `json:"WorkingDir"` // dumb bs that needs to be set to start remote star remote servers
+	StarPath        string `json:"StarPath"`
+	PodKey          string `json:"PodKey"`
+	JavaMacro       string `json:"JavaMacro"`
+	SimFile         string `json:"SimFile"`
+	WorkingDir      string `json:"WorkingDir"` // dumb bs that needs to be set to start remote star remote servers
+	InstallSoftware bool   `json:"InstallSoftware"`
+	TarBall         string `json:"TarBall"`
+	InstallDest     string `json:"InstallDest"`
 }
 
 type DesignParameter struct {
-	Name    string  `json:"Name"`
-	Units   string  `json:"Units"`
-	Min     float64 `json:"Min"`
-	Max     float64 `json:"Max"`
-	Step    float64 `json:"Step"`
-	NumSims int     `json:"NumSims"`
-	Mean    float64
-	StdDev  float64
+	Name          string  `json:"Name"`
+	Units         string  `json:"Units"`
+	Min           float64 `json:"Min"`
+	Max           float64 `json:"Max"`
+	Step          float64 `json:"Step"`
+	NumSims       int     `json:"NumSims"`
+	ScalingFactor float64 `json:"ScalingFactor"`
+	Mean          float64
+	StdDev        float64
 }
 
 type DesignObjective struct {
 	Name   string  `json:"Name"`
 	Goal   string  `json:"Goal"`   // minimize or maximize, ex: df would want maximize while drag minimize
 	Weight float32 `json:"Weight"` // may no explicitly use this
+	Target float32 `json:"Target"`
 }
 
 type MOOConfig struct {
@@ -56,6 +62,11 @@ type DesignStudyConfig struct {
 	NtasksPerNode         int
 }
 
+type Test struct {
+	Test     bool
+	Function string
+}
+
 type ConfigFile struct {
 	UseDM             bool                    `json:"UseDM"` // use dm or just output generated scripts
 	OutputDir         string                  `json:"OutputDir"`
@@ -63,6 +74,8 @@ type ConfigFile struct {
 	DesignStudyConfig DesignStudyConfig       `json:"DesignStudyConfig"`
 	StarCCM           StarCCM                 `json:"Starccm"`
 	WorkingDir        string                  `json:"WorkingDir"`
+	Discord           discord.DiscordHook     `json:"Discord"`
+	Test              Test
 }
 
 func ParseDesignManagerConfigFile(configFilePath string) types.ConfigFile {

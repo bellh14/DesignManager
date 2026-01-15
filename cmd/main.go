@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"runtime/pprof"
 	"strconv"
 
 	"github.com/bellh14/DesignManager/config"
@@ -14,10 +13,6 @@ import (
 )
 
 func main() {
-	// memory profile
-	f, _ := os.Create("memprofile.prof")
-	pprof.WriteHeapProfile(f)
-	defer f.Close()
 	// creat logger
 	logger := log.NewLogger(0, "DM", "#941ff4") // Parse command line arguments
 
@@ -25,6 +20,8 @@ func main() {
 	batchSystemFlag := flag.String("bs", "", "batch system (only supports slurm right now)")
 	slurmNodeList := flag.String("slurmNodeList", "", "List of slurm nodes allocated")
 	nodesPerSim := flag.String("nps", "", "Number of nodes per sim if more than 1")
+	handlerNode := flag.String("hn", "", "Mark the first node as a handler node")
+	testDM := flag.String("test", "", "test with fuction _")
 	flag.Parse()
 
 	if *inputFile == "" {
@@ -72,6 +69,9 @@ func main() {
 		if *nodesPerSim == "" {
 			simsPerNode = (config.SlurmConfig.Ntasks / config.SlurmConfig.Nodes) / config.DesignStudyConfig.NtasksPerSim
 		}
+		if *handlerNode == "y" {
+			nodes = nodes[1:] // if using a handler node, remove it from the list
+		}
 		fullNodeList := batchsystem.DuplicateNodes(nodes, simsPerNode)
 
 		config.SlurmConfig.NodeList = fullNodeList
@@ -87,6 +87,11 @@ func main() {
 
 		config.SlurmConfig.NodeList = fullNodeList
 		config.DesignStudyConfig.NtasksPerNode = config.DesignStudyConfig.NtasksPerSim / nps
+	}
+
+	if *testDM != "" {
+		config.Test.Test = true
+		config.Test.Function = *testDM
 	}
 
 	// Create design manager

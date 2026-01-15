@@ -4,14 +4,17 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"runtime/pprof"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/bellh14/DesignManager/config"
+	"github.com/bellh14/DesignManager/pkg/discord"
 	"github.com/bellh14/DesignManager/pkg/generator/inputs"
 	"github.com/bellh14/DesignManager/pkg/generator/jobscript"
+	"github.com/bellh14/DesignManager/pkg/generator/software"
+	"github.com/bellh14/DesignManager/pkg/optimization/custom"
 	"github.com/bellh14/DesignManager/pkg/optimization/genetic"
 	"github.com/bellh14/DesignManager/pkg/simulations"
 	"github.com/bellh14/DesignManager/pkg/utils"
@@ -24,6 +27,7 @@ type DesignManager struct {
 	InputGenerator  inputs.SimInputGenerator
 	SimResultParams []string
 	SimResults      [][]float64
+	DiscordHook     discord.DiscordHook
 }
 
 func NewDesignManager(config config.ConfigFile, logger *log.Logger) *DesignManager {
@@ -40,11 +44,69 @@ func (dm *DesignManager) Run() {
 		dm.Logger.Log("Use DM set to false. Exiting")
 		return
 	}
+	if dm.ConfigFile.Discord.WebhookURL != "" {
+		dm.ConfigureDiscordHook()
+	}
+
+	if dm.ConfigFile.StarCCM.InstallSoftware {
+		dm.Logger.Log("Installing software")
+		dm.InstallSoftware()
+	}
 	if dm.ConfigFile.DesignStudyConfig.StudyType != "Pareto" {
 		dm.HandleInputs()
 	}
 	dm.HandleDesignStudy(dm.ConfigFile.DesignStudyConfig.StudyType)
 	dm.SaveCompiledResults("")
+	dm.DiscordHook.PayloadJson.Content = "Finished running design study"
+	dm.DiscordHook.CallWebHook(true)
+}
+
+func (dm *DesignManager) ConfigureDiscordHook() {
+	dm.DiscordHook.PayloadJson = dm.ConfigFile.Discord.PayloadJson
+	dm.DiscordHook.Files = dm.ConfigFile.Discord.Files
+	dm.DiscordHook.WebhookURL = dm.ConfigFile.Discord.WebhookURL
+	dm.DiscordHook.ThreadID = dm.ConfigFile.Discord.ThreadID
+	dm.DiscordHook = *discord.NewDiscordHook(dm.DiscordHook.PayloadJson, dm.DiscordHook.Files,
+		dm.DiscordHook.WebhookURL, dm.DiscordHook.ThreadID, *dm.Logger)
+}
+
+func (dm *DesignManager) InstallSoftware() {
+	// loop over NodeList
+	// call install software for each node using a buffered channel
+	// worker pool
+	numNodes := len(dm.ConfigFile.SlurmConfig.NodeList)
+	jobs := make(chan int, numNodes)
+	// results := make(chan []float64, numSimsPerGen)
+	wg := sync.WaitGroup{}
+
+	for i := range numNodes {
+		wg.Add(1)
+		jobs <- 1
+		time.Sleep(5 * time.Second)
+		go func(i int) {
+			defer wg.Done()
+			dm.Logger.Log(fmt.Sprintf("Installing on: %s", dm.ConfigFile.SlurmConfig.NodeList[i]))
+			err := software.InstallSoftware(
+				dm.ConfigFile.SlurmConfig.NodeList[i],
+				dm.ConfigFile.StarCCM.WorkingDir,
+				dm.ConfigFile.StarCCM.TarBall,
+				dm.ConfigFile.StarCCM.InstallDest,
+				dm.Logger,
+			)
+			if err != nil {
+				dm.Logger.Fatal(
+					fmt.Sprintf(
+						"failed to install software on node %s",
+						dm.ConfigFile.SlurmConfig.NodeList[i],
+					),
+					err,
+				)
+			}
+			<-jobs
+		}(i)
+	}
+
+	wg.Wait()
 }
 
 func (dm *DesignManager) HandleAeroMap() {
@@ -121,6 +183,7 @@ func (dm *DesignManager) HandleSweep(offset int, numSims int, hostIndex int) {
 			simLogger,
 			dm.ConfigFile.SlurmConfig,
 			dm.ConfigFile.SlurmConfig.NodeList[hostIndex],
+			dm.ConfigFile.Test.Function,
 		)
 		sim.Run()
 		simParams, simResults := sim.ParseSimulationResults()
@@ -197,6 +260,7 @@ func (dm *DesignManager) HandlePareto() {
 						ind.Fitness,
 					),
 				)
+				// dm.SimResults = append(dm.SimResults, ind.Sim.DesignObjectiveResults)
 			}
 			dm.Logger.Log("Saving compiled generation results")
 			dm.SaveCompiledResults(
@@ -207,11 +271,12 @@ func (dm *DesignManager) HandlePareto() {
 				),
 			)
 
+			// clear slices
+			dm.SimResults = nil
+			dm.SimResultParams = nil
+
 			continue
 		}
-		f, _ := os.Create(fmt.Sprintf("memprofile_%d.prof", generation))
-		pprof.WriteHeapProfile(f)
-		defer f.Close()
 		newPopulation := make(genetic.Population, 0, numSimsPerGeneration)
 		i := 1
 		for len(newPopulation) < numSimsPerGeneration {
@@ -230,6 +295,7 @@ func (dm *DesignManager) HandlePareto() {
 				simLogger,
 				dm.ConfigFile.SlurmConfig,
 				dm.ConfigFile.SlurmConfig.NodeList[i-1],
+				dm.ConfigFile.Test.Function,
 			)
 
 			child := genetic.Individual{
@@ -314,14 +380,25 @@ func (dm *DesignManager) HandlePareto() {
 	}
 }
 
+func (dm *DesignManager) HandleCustom() {
+	custom.HandleCustomAlg(dm.ConfigFile, dm.Logger, dm.DiscordHook)
+}
+
 func (dm *DesignManager) HandleDesignStudy(studyType string) {
+	dm.DiscordHook.PayloadJson.Content = "Running Design Study"
+	dm.DiscordHook.CallWebHook(false)
 	switch studyType {
 	case "AeroMap":
 		dm.Logger.Log("Running AeroMap")
 		dm.HandleAeroMap()
 	case "Pareto":
-		dm.HandlePareto()
-		dm.Logger.Log("Running Pareto Study")
+		if dm.ConfigFile.DesignStudyConfig.MOOConfig.OptimizationAlgorithm == "Genetic" {
+			dm.Logger.Log("Running Pareto Study")
+			dm.HandlePareto()
+		} else if dm.ConfigFile.DesignStudyConfig.MOOConfig.OptimizationAlgorithm == "Custom" {
+			dm.Logger.Log("Running MOO study with Custom PSO algorithm")
+			dm.HandleCustom()
+		}
 	case "Sweep":
 		dm.Logger.Log("Running design sweep")
 		dm.HandleSweep(0, dm.ConfigFile.DesignStudyConfig.NumSims, 0)
@@ -332,9 +409,6 @@ func (dm *DesignManager) HandleDesignStudy(studyType string) {
 }
 
 func (dm *DesignManager) SaveCompiledResults(fileName string) {
-	if fileName != "" {
-		// fileName = strings.TrimSuffix(dm.ConfigFile.StarCCM.SimFile, ".sim")
-	}
 	resultsFile, err := os.Create("Compiled_" + fileName + "_Report.csv")
 	if err != nil {
 		dm.Logger.Error("Failed to create results file", err)

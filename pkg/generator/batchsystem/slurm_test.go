@@ -41,6 +41,28 @@ func TestParseNodeListSingles(t *testing.T) {
 	}
 }
 
+func TestParseNodeListSinglesCompute(t *testing.T) {
+	t.Helper()
+	hostName := "ganymede.utdallas.edu"
+	nodeList := "compute-1-2-3,compute-7-8-[22,23]"
+	nodes, err := batchsystem.ParseNodeList(nodeList, hostName)
+	if err != nil {
+		t.Errorf("Failed to parse node list %s", err)
+	}
+	if nodes[0] != "compute-1-2-3.ganymede.utdallas.edu" {
+		t.Errorf("Got %s : Wanted %s", nodes[0], "compute-1-2-3.ganymede.utdallas.edu")
+	}
+	if nodes[1] != "compute-7-8-22.ganymede.utdallas.edu" {
+		t.Errorf("Got %s : Wanted %s", nodes[1], "compute-7-8-22.ganymede.utdallas.edu")
+	}
+	if nodes[2] != "compute-7-8-23.ganymede.utdallas.edu" {
+		t.Errorf("Got %s : Wanted %s", nodes[2], "compute-7-8-23.ganymede.utdallas.edu")
+	}
+	if len(nodes) == 0 {
+		t.Errorf("Failed to parse node list %s", nodes)
+	}
+}
+
 func TestParseNodeListSinglePlusArray(t *testing.T) {
 	t.Helper()
 	hostName := "stampede3.tacc.utexas.edu"

@@ -95,7 +95,11 @@ func parseNodeRange(nodePrefix, rangePart string, hostName string) ([]string, er
 		}
 		node := ""
 		if hostName != "" {
-			node = fmt.Sprintf("%s-%03d.%s", nodePrefix, num, hostName)
+			if strings.HasPrefix(nodePrefix, "compute") {
+				node = fmt.Sprintf("%s-%d.%s", strings.TrimSuffix(nodePrefix, "-"), num, hostName)
+			} else {
+				node = fmt.Sprintf("%s-%03d.%s", nodePrefix, num, hostName)
+			}
 		} else {
 			node = fmt.Sprintf("%s%d", nodePrefix, num)
 		}
@@ -116,7 +120,11 @@ func parseNodeRange(nodePrefix, rangePart string, hostName string) ([]string, er
 	for i := start; i <= end; i++ {
 		node := ""
 		if hostName != "" {
-			node = fmt.Sprintf("%s-%03d.%s", nodePrefix, i, hostName)
+			if strings.HasPrefix(nodePrefix, "compute") {
+				node = fmt.Sprintf("%s-%d.%s", strings.TrimSuffix(nodePrefix, "-"), i, hostName)
+			} else {
+				node = fmt.Sprintf("%s-%03d.%s", nodePrefix, i, hostName)
+			}
 		} else {
 			node = fmt.Sprintf("%s%d", nodePrefix, i)
 		}
@@ -130,20 +138,23 @@ func ParseNodeList(slurmNodeList string, hostName string) ([]string, error) {
 
 	// "c519-[051-054,061-064,071-074,081-084]"
 	re := regexp.MustCompile(
-		`([a-zA-Z]+\d+)-\[(\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*)\]|([a-zA-Z]+\d+-\d+)`,
+		`(compute-\d+-\d+-\d+)|` + // Matches compute-X-Y-Z
+			`(compute-\d+-\d+-\[(\d{1,2}(?:-\d{1,2})?(?:,\d{1,2}(?:-\d{1,2})?)*)\])|` + // Matches compute-X-Y-[range]
+			`([a-zA-Z]+\d+)-\[(\d{3}(?:-\d{3})?(?:,\d{3}(?:-\d{3})?)*)\]|` + // Matches cXXX-[range]
+			`([a-zA-Z]+\d+-\d{3})`, // Matches cXXX-YYY
 	)
-
 	matches := re.FindAllStringSubmatch(slurmNodeList, -1)
 
 	for _, match := range matches {
-		if match[3] != "" {
-			allNodes = append(allNodes, fmt.Sprintf("%s.%s", match[3], hostName))
-		} else if match[1] != "" && match[2] != "" {
-			nodePrefix := match[1]
-			rangePart := match[2]
+		switch {
+		case match[1] != "": // Single node: compute-X-Y-Z
+			allNodes = append(allNodes, fmt.Sprintf("%s.%s", match[1], hostName))
+
+		case match[2] != "" && match[3] != "": // Range: compute-X-Y-[range]
+			nodePrefix := match[2][:strings.LastIndex(match[2], "[")]
+			rangePart := match[3]
 
 			ranges := strings.Split(rangePart, ",")
-
 			for _, r := range ranges {
 				nodes, err := parseNodeRange(nodePrefix, r, hostName)
 				if err != nil {
@@ -151,9 +162,24 @@ func ParseNodeList(slurmNodeList string, hostName string) ([]string, error) {
 				}
 				allNodes = append(allNodes, nodes...)
 			}
+
+		case match[4] != "" && match[5] != "": // Range: cXXX-[range]
+			nodePrefix := match[4]
+			rangePart := match[5]
+
+			ranges := strings.Split(rangePart, ",")
+			for _, r := range ranges {
+				nodes, err := parseNodeRange(nodePrefix, r, hostName)
+				if err != nil {
+					return nil, err
+				}
+				allNodes = append(allNodes, nodes...)
+			}
+
+		case match[6] != "": // Single node: cXXX-YYY
+			allNodes = append(allNodes, fmt.Sprintf("%s.%s", match[6], hostName))
 		}
 	}
-
 	return allNodes, nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/bellh14/DesignManager/config"
 	"github.com/bellh14/DesignManager/pkg/generator/batchsystem"
@@ -53,12 +54,20 @@ func GenerateJobScript(
 	inputs inputs.SimInputIteration,
 	slurmConfig batchsystem.SlurmConfig,
 	hostNodes string,
+	testFunction string,
 ) {
 	paramString := CreateParamsString(inputs)
 
 	// TODO: make this less painful to read
 	jobDir := jobScriptInputs.WorkingDir + "/" + fmt.Sprint(jobNumber)
 	jobScriptInputs.StarWorkingDir += "/" + fmt.Sprint(jobNumber)
+	_, err := os.Stat(fmt.Sprintf("%s/sim_%d.sh", jobDir, jobNumber))
+	if !os.IsNotExist(err) {
+		err := os.Remove(fmt.Sprintf("%s/sim_%d.sh", jobDir, jobNumber))
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 	jobScript, err := os.Create(fmt.Sprintf("%s/sim_%d.sh", jobDir, jobNumber))
 	if err != nil {
 		// TODO: handle error
@@ -76,32 +85,49 @@ func GenerateJobScript(
 
 	utils.WriteStructOfBashVariables(jobSubmissionValues, jobScript, []string{})
 
-	jobScript.WriteString("\nmodule load starccm/18.06.006\ncd $StarWorkingDir\n\n")
+	if jobScriptInputs.StarPath == "" {
+		jobScript.WriteString("\nmodule load starccm/18.06.006\n")
+	}
+
+	jobScript.WriteString("\ncd $StarWorkingDir\n\n")
 
 	// jobScript.WriteString("mkdir $WorkingDir/$JobNumber\n\n")
 
 	// coreOffset := jobScriptInputs.Ntasks * (jobNumber % 2) // TODO temp since we are running 56x2
 
-	if jobScriptInputs.StarPath == "" {
+	if testFunction != "" {
+		simName := strings.TrimSuffix(jobScriptInputs.SimFile, ".sim")
+		reportName := simName + "_Report.csv"
 		jobScript.WriteString(
 			fmt.Sprintf(
-				"starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -machinefile $WorkingDir/%s -time -batch-report > $WorkingDir/output.txt 2>&1",
-				// jobScriptInputs.Ntasks,
-				// coreOffset,
-				paramString,
-				hostNodes,
+				"./MOOT -f InputParams.csv -o %s --test %s > $WorkingDir/output.txt 2>&1",
+				reportName,
+				testFunction,
 			),
 		)
+
 	} else {
-		jobScript.WriteString(
-			fmt.Sprintf(
-				"$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -on %s -time -batch-report > $WorkingDir/output.txt 2>&1",
-				// jobScriptInputs.Ntasks,
-				// coreOffset,
-				paramString,
-				hostNodes,
-			),
-		)
+		if jobScriptInputs.StarPath == "" {
+			jobScript.WriteString(
+				fmt.Sprintf(
+					"starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -on %s -time -batch-report -jvmargs -Xmx16G> $WorkingDir/output.txt 2>&1",
+					// jobScriptInputs.Ntasks,
+					// coreOffset,
+					paramString,
+					hostNodes,
+				),
+			)
+		} else {
+			jobScript.WriteString(
+				fmt.Sprintf(
+					"$StarPath/starccm+ -power -licpath 1999@flex.cd-adapco.com -podkey $PodKey -batch $WorkingDir/$JavaMacro $WorkingDir/$SimFile -np $Ntasks %s -on %s -time -batch-report -jvmargs -Xmx16G> $WorkingDir/output.txt 2>&1",
+					// jobScriptInputs.Ntasks,
+					// coreOffset,
+					paramString,
+					hostNodes,
+				),
+			)
+		}
 	}
 	// jobScript.WriteString(
 	// 	fmt.Sprintf(

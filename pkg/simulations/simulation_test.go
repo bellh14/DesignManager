@@ -82,7 +82,7 @@ func testCreateNewSimulation(t *testing.T) *simulations.Simulation {
 	}
 	logger := log.NewLogger(0, "Simulation Test", "63")
 	hostName := "c410-043.host.system.com"
-	return simulations.NewSimulation(&jobSubmission, 1, inputs, logger, slurmInputs, hostName)
+	return simulations.NewSimulation(&jobSubmission, 1, inputs, logger, slurmInputs, hostName, "")
 }
 
 func testSetWorkingDir(t *testing.T, sim *simulations.Simulation) {
